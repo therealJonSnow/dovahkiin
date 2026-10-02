@@ -107,3 +107,12 @@ describe('helpers', () => {
     expect(findBannedWords('See you later')).toEqual([]);
   });
 });
+
+describe('banned words in the markdown body', () => {
+  it('warns about banned words in the description', () => {
+    const entry = m({ id: 'a' });
+    entry.body = 'Babies should do this.';
+    const res = validateContent({ branches, milestones: [entry], bands });
+    expect(res.warnings.join('\n')).toMatch(/avoid "should"/);
+  });
+});

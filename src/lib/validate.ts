@@ -91,7 +91,7 @@ export function validateContent(input: ValidationInput): ValidationResult {
   const published = input.milestones.filter((m) => !m.data.draft);
   const allById = new Map(input.milestones.map((m) => [m.data.id, m]));
 
-  for (const { file, data: m } of input.milestones) {
+  for (const { file, data: m, body } of input.milestones) {
     if (!branchIds.has(m.branch)) {
       errors.push(`${file}: branch "${m.branch}" does not exist. Known branches: ${[...branchIds].join(', ')}.`);
     }
@@ -138,7 +138,7 @@ export function validateContent(input: ValidationInput): ValidationResult {
     }
     if (m.sources.length === 0) warnings.push(`${file}: no sources cited.`);
 
-    const copy = [m.title, m.label ?? '', m.gameText, m.fact ?? '', m.body ?? '', ...m.quests.flatMap((q) => [q.title, q.body])].join(
+    const copy = [m.title, m.label ?? '', m.gameText, m.fact ?? '', body ?? '', ...m.quests.flatMap((q) => [q.title, q.body])].join(
       '\n',
     );
     const banned = findBannedWords(copy);

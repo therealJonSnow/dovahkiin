@@ -1,0 +1,55 @@
+---
+import '@fontsource/barlow-condensed/400.css';
+import '@fontsource/barlow-condensed/500.css';
+import '@fontsource/barlow-condensed/600.css';
+import '@fontsource-variable/inter';
+import '../styles/global.css';
+import { STORAGE_KEY } from '../lib/storage';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Dovahkiin · Baby Skill Tree',
+  description = "Your baby's first two years as an RPG skill tree: see what they've unlocked, what's coming up, and what to prepare.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#060914" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4efe6" media="(prefers-color-scheme: light)" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script is:inline define:vars={{ key: STORAGE_KEY }}>
+      // Apply the saved theme before first paint, and hide the landing hero for returning visitors.
+      try {
+        var s = JSON.parse(localStorage.getItem(key) || 'null');
+        var th = s && s.prefs && s.prefs.theme;
+        if (th === 'dark' || th === 'light') document.documentElement.dataset.theme = th;
+        if (s && s.baby && s.baby.dob) document.documentElement.classList.add('has-baby');
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div class="sky" aria-hidden="true"><canvas id="nebula"></canvas></div>
+    <slot />
+    <script>
+      const canvas = document.getElementById('nebula') as HTMLCanvasElement | null;
+      if (canvas) {
+        const go = () => import('../lib/nebula').then((m) => m.startNebula(canvas));
+        if ('requestIdleCallback' in window) requestIdleCallback(go, { timeout: 1500 });
+        else setTimeout(go, 300);
+      }
+    </script>
+  </body>
+</html>

@@ -41,7 +41,7 @@ export const DEFAULT_LAYOUT: LayoutOptions = {
   padBottom: 48,
   minBandHeight: 170,
   pxPerWeek: 3,
-  zigzag: 0.2,
+  zigzag: 0.16,
 };
 
 export interface LayoutBand extends LayoutInputBand {

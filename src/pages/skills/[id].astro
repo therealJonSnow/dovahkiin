@@ -1,0 +1,70 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Base from '../../layouts/Base.astro';
+import StaticHeader from '../../components/StaticHeader.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import NodeDetail from '../../components/NodeDetail.svelte';
+import { getTreeData } from '../../lib/content';
+
+export const getStaticPaths = (async () => {
+  const data = await getTreeData();
+  return data.nodes.map((node) => ({ params: { id: node.id } }));
+}) satisfies GetStaticPaths;
+
+const data = await getTreeData();
+const node = data.nodes.find((n) => n.id === Astro.params.id)!;
+const branch = data.branches.find((b) => b.id === node.branch)!;
+const related = (ids: string[]) =>
+  ids
+    .map((id) => data.nodes.find((n) => n.id === id))
+    .filter((n) => !!n)
+    .map((n) => ({ id: n.id, title: n.title, color: data.branches.find((b) => b.id === n.branch)?.color ?? '#999' }));
+const settings = {
+  readyLeadWeeks: data.settings.readyLeadWeeks,
+  horizonWeeks: data.settings.horizonWeeks,
+  disclaimer: data.settings.disclaimer,
+  pastWindowNote: data.settings.pastWindowNote,
+};
+const plain = node.html.replace(/<[^>]+>/g, '').trim().split('\n')[0]?.slice(0, 160);
+---
+
+<Base title={`${node.title} · Dovahkiin`} description={plain}>
+  <StaticHeader />
+  <main class="page skill-page">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href="/">Tree</a> <span aria-hidden="true">›</span> <span>{branch.name}</span>
+    </nav>
+    <div class="panel card">
+      <NodeDetail {node} {branch} prereqs={related(node.prereqs)} unlocks={related(node.unlocks)} {settings} />
+      <a class="btn btn-primary open" href={`/?skill=${node.id}`}>Open in your tree</a>
+    </div>
+  </main>
+  <SiteFooter />
+</Base>
+
+<style>
+  .crumbs {
+    font-family: var(--font-display);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+  .crumbs a {
+    color: var(--ink-2);
+  }
+  .card {
+    padding: 1.5rem;
+    background: var(--panel-solid);
+  }
+  .open {
+    margin-top: 1.25rem;
+  }
+  @media (max-width: 640px) {
+    .card {
+      padding: 1rem;
+    }
+  }
+</style>

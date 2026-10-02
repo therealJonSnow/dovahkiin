@@ -1,0 +1,73 @@
+---
+import Base from '../layouts/Base.astro';
+import StaticHeader from '../components/StaticHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { getTreeData } from '../lib/content';
+
+const { settings, branches, nodes } = await getTreeData();
+---
+
+<Base title="About · Dovahkiin">
+  <StaticHeader />
+  <main class="page prose">
+    <h1>About</h1>
+    <hr class="sk-rule" />
+    <p class="disclaimer-box"><strong>{settings.disclaimer}</strong> {settings.footer}</p>
+
+    <h2>What is this?</h2>
+    <p>
+      Dovahkiin turns your baby's first two years into an RPG-style skill tree. Birth is at the top and age increases as you
+      scroll down. Each column is a branch of development, and each star is a skill. Prerequisites are drawn as constellation lines.
+    </p>
+    <p>
+      Enter your baby's date of birth and the tree shows what they've unlocked, what they might be ready for now, and what's coming
+      up. Every skill comes with <em>dad quests</em>: things to prepare, play and make safe before the next big moment arrives.
+    </p>
+
+    <h2>How to read the stars</h2>
+    <ul>
+      <li><strong>Small star</strong>: a skill. <strong>Large star</strong>: a milestone. <strong>Diamond</strong>: a keystone, like first steps.</li>
+      <li><strong>Dim with a lock</strong>: locked for now. <strong>Dashed ring with a clock</strong>: coming up soon.</li>
+      <li><strong>Dashed ring with an hourglass</strong>: old enough, but it usually comes after another skill.</li>
+      <li><strong>Pulsing ring with sparkles</strong>: ready now. <strong>Bright and glowing with a tick</strong>: unlocked.</li>
+    </ul>
+    <p>
+      Age windows are broad on purpose. Plenty of babies reach skills at the far ends of a window, and some skip steps entirely (lots of
+      babies never crawl). There's no "late" here.
+    </p>
+
+    <h2>Born early?</h2>
+    <p>
+      If you add a due date that's more than two weeks after the date of birth, the tree uses <strong>corrected age</strong> (age from
+      the due date) until your baby's actual age reaches two years.
+    </p>
+
+    <h2>Where the ages come from</h2>
+    <p>
+      Age windows are based on public-health sources: the CDC's "Learn the Signs. Act Early." milestone checklists, the WHO Multicentre
+      Growth Reference Study's windows of achievement for gross-motor milestones, and NHS guidance (including weaning and baby-proofing).
+      Safe-sleep quests follow the Lullaby Trust. Each skill lists its sources.
+    </p>
+
+    <h2>Privacy</h2>
+    <p>
+      Your baby's details and progress are stored only in this browser (localStorage). Nothing is sent to a server, and there are no
+      trackers. You can export, import or reset your progress from the settings menu.
+    </p>
+
+    <h2>The tree</h2>
+    <p>{nodes.length} skills across {branches.length} branches: {branches.map((b) => b.name).join(', ')}.</p>
+  </main>
+  <SiteFooter />
+</Base>
+
+<style>
+  .disclaimer-box {
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--panel-border);
+    border-left: 3px solid var(--gold);
+    border-radius: var(--radius);
+    background: var(--panel);
+    color: var(--ink);
+  }
+</style>

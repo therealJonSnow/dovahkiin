@@ -1,0 +1,41 @@
+---
+import { getTreeData } from '../lib/content';
+const { settings } = await getTreeData();
+---
+
+<footer class="site-footer">
+  <hr class="sk-rule" />
+  <p class="disclaimer">{settings.footer}</p>
+  <p class="disclaimer">{settings.disclaimer}</p>
+  <nav aria-label="Footer">
+    <a href="/">Tree</a>
+    <a href="/about">About</a>
+  </nav>
+</footer>
+
+<style>
+  .site-footer {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 2rem var(--gutter) 3rem;
+    text-align: center;
+  }
+  .sk-rule {
+    margin-bottom: 1.25rem;
+  }
+  nav {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    font-family: var(--font-display);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  nav a {
+    color: var(--ink-2);
+    text-decoration: none;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+</style>
