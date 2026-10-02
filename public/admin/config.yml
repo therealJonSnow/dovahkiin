@@ -1,0 +1,254 @@
+# Sveltia CMS configuration — https://github.com/sveltia/sveltia-cms
+# Content lives in src/content and is validated at build time
+# (scripts/validate-content.ts), so a bad edit fails the Vercel build
+# with a readable message instead of breaking the live site.
+
+backend:
+  name: github
+  repo: therealjonsnow/dovahkiin
+  branch: main
+  # Start with "Sign in with Token" (fine-grained PAT: Contents + Pull requests read/write).
+  # For proper GitHub OAuth later, deploy the Sveltia CMS Authenticator and set:
+  # base_url: https://sveltia-cms-auth.<your-subdomain>.workers.dev
+
+# Uncomment to review changes as PRs before they go live:
+# publish_mode: editorial_workflow
+
+media_folder: public/uploads
+public_folder: /uploads
+
+slug:
+  encoding: ascii
+  clean_accents: true
+  sanitize_replacement: '-'
+
+collections:
+  - name: milestones
+    label: Milestones
+    label_singular: Milestone
+    description: >-
+      Skills in the tree. The ID becomes the file name and the /skills/ URL, so never change it
+      once published. Ages are in weeks: 4w ≈ 1m · 13w ≈ 3m · 26w ≈ 6m · 39w ≈ 9m · 52w ≈ 12m · 78w ≈ 18m · 104w = 24m.
+    folder: src/content/milestones
+    extension: md
+    format: frontmatter
+    create: true
+    delete: true
+    identifier_field: id
+    slug: '{{id}}'
+    summary: '{{title}} · {{branch}} · {{ageWeeksMin}}–{{ageWeeksMax}}w'
+    sortable_fields:
+      fields: [title, branch, tier, ageWeeksMin]
+      default:
+        field: ageWeeksMin
+        direction: ascending
+    view_filters:
+      - { label: The Body, field: branch, pattern: '^body$' }
+      - { label: The Voice, field: branch, pattern: '^voice$' }
+      - { label: The Senses, field: branch, pattern: '^senses$' }
+      - { label: The Heart, field: branch, pattern: '^heart$' }
+      - { label: The Mind, field: branch, pattern: '^mind$' }
+      - { label: The Independence, field: branch, pattern: '^independence$' }
+      - { label: Keystones, field: tier, pattern: '^keystone$' }
+      - { label: Drafts, field: draft, pattern: true }
+    view_groups:
+      - { label: Branch, field: branch }
+      - { label: Tier, field: tier }
+    fields:
+      - name: id
+        label: ID
+        widget: string
+        pattern: ['^[a-z0-9]+(-[a-z0-9]+)*$', 'Use kebab-case, e.g. rolls-front-to-back']
+        hint: Stable forever. Becomes the file name and the /skills/ URL. Saved progress refers to it.
+      - { name: title, label: Title, widget: string, hint: 'e.g. "Rolls Over (Tummy → Back)"' }
+      - name: label
+        label: Short label
+        widget: string
+        required: false
+        hint: Shown under the star in the tree. Keep it to 1–3 words. Falls back to the title.
+      - name: branch
+        label: Branch
+        widget: relation
+        collection: branches
+        value_field: id
+        search_fields: [name]
+        display_fields: [name]
+      - name: tier
+        label: Tier
+        widget: select
+        options:
+          - { label: Minor (small star), value: minor }
+          - { label: Major (large star), value: major }
+          - { label: Keystone (diamond), value: keystone }
+        default: minor
+      - name: ageWeeksMin
+        label: Window starts (weeks)
+        widget: number
+        value_type: int
+        min: 0
+        max: 104
+        hint: 'Typical age the window opens. 4w ≈ 1m · 13w ≈ 3m · 26w ≈ 6m · 39w ≈ 9m · 52w ≈ 12m · 78w ≈ 18m.'
+      - name: ageWeeksMax
+        label: Window ends (weeks)
+        widget: number
+        value_type: int
+        min: 0
+        max: 104
+        hint: Typical age the window closes. Must be at least the start.
+      - name: prereqs
+        label: Prerequisites
+        widget: relation
+        collection: milestones
+        multiple: true
+        required: false
+        value_field: id
+        search_fields: [title]
+        display_fields: [title]
+        hint: Skills that usually come first. Drawn as lines in the tree. Cycles fail the build.
+      - name: gameText
+        label: Game text
+        widget: text
+        required: false
+        hint: "One or two lines in an RPG / system-log voice. Required for keystones. e.g. \"Barrel roll acquired. Landing: optional.\""
+      - name: fact
+        label: Fun fact
+        widget: text
+        required: false
+      - name: quests
+        label: Dad quests
+        widget: list
+        required: false
+        summary: '{{fields.type}} · {{fields.title}}'
+        fields:
+          - name: id
+            label: Quest ID
+            widget: string
+            pattern: ['^[a-z0-9]+(-[a-z0-9]+)*$', 'Use kebab-case, e.g. clear-the-cot']
+            hint: Stable forever, unique within this milestone. Saved "done" ticks refer to it.
+          - name: type
+            label: Type
+            widget: select
+            options:
+              - { label: Prepare (surfaces before the window), value: prepare }
+              - { label: Play (while ready), value: play }
+              - { label: 'Safety (highlighted, before and during)', value: safety }
+          - { name: title, label: Title, widget: string, hint: Imperative and specific. }
+          - { name: body, label: Body, widget: text, required: false, hint: One sentence where possible. }
+          - name: leadWeeks
+            label: Lead time (weeks)
+            widget: number
+            value_type: int
+            min: 0
+            max: 52
+            required: false
+            hint: How many weeks before the window opens this shows up. Defaults to 4 for prepare, 2 for safety.
+      - name: sources
+        label: Sources
+        widget: list
+        required: false
+        summary: '{{fields.label}}'
+        fields:
+          - { name: label, label: Label, widget: string, hint: 'e.g. "CDC — Milestones by 4 months"' }
+          - { name: url, label: URL, widget: string }
+      - name: sortOffset
+        label: Sort offset (weeks)
+        widget: number
+        value_type: float
+        required: false
+        hint: Optional nudge for the position within its band if the automatic layout collides.
+      - { name: draft, label: Draft, widget: boolean, default: false, hint: Drafts are left out of the live site. }
+      - name: body
+        label: Description
+        widget: markdown
+        hint: Plain English, 1–3 short paragraphs, UK spelling (nappy, cot, mum). Avoid "should", "late", "behind", "delayed".
+
+  - name: branches
+    label: Branches
+    label_singular: Branch
+    folder: src/content/branches
+    extension: yml
+    format: yaml
+    create: true
+    identifier_field: id
+    slug: '{{id}}'
+    summary: '{{order}}. {{name}}'
+    sortable_fields: [order, name]
+    fields:
+      - name: id
+        label: ID
+        widget: string
+        pattern: ['^[a-z0-9]+(-[a-z0-9]+)*$', 'Use kebab-case']
+        hint: Stable forever. Milestones refer to it.
+      - { name: name, label: Name, widget: string }
+      - { name: tagline, label: Tagline, widget: string, required: false }
+      - { name: color, label: Colour, widget: color, hint: 'One source colour. All tints are derived from it.' }
+      - name: icon
+        label: Icon
+        widget: select
+        options: [body, voice, senses, heart, mind, independence, star]
+      - { name: order, label: Column order, widget: number, value_type: int }
+
+  - name: structure
+    label: Tree structure
+    files:
+      - name: bands
+        label: Age bands
+        file: src/content/bands/bands.yml
+        fields:
+          - name: bands
+            label: Bands
+            widget: list
+            summary: '{{fields.label}} ({{fields.ageWeeksStart}}–{{fields.ageWeeksEnd}}w)'
+            hint: Horizontal floors of the tree. Must run from 0 to 104 weeks with no gaps.
+            fields:
+              - { name: id, label: ID, widget: string }
+              - { name: label, label: Label, widget: string }
+              - { name: ageWeeksStart, label: Starts (weeks), widget: number, value_type: int, min: 0, max: 104 }
+              - { name: ageWeeksEnd, label: Ends (weeks), widget: number, value_type: int, min: 0, max: 104 }
+
+  - name: settings
+    label: Site settings
+    files:
+      - name: site
+        label: Settings
+        file: src/content/settings/site.yml
+        fields:
+          - name: readyLeadWeeks
+            label: Ready lead (weeks)
+            widget: number
+            value_type: int
+            min: 0
+            max: 26
+            hint: A skill becomes "ready" this many weeks before its window opens.
+          - name: horizonWeeks
+            label: Horizon (weeks)
+            widget: number
+            value_type: int
+            min: 1
+            max: 52
+            hint: How far ahead "Up next" and "coming up" look.
+          - name: levelTitles
+            label: Baby level titles
+            widget: list
+            summary: 'Lv {{fields.at}}+ · {{fields.title}}'
+            fields:
+              - { name: at, label: From level, widget: number, value_type: int, min: 0 }
+              - { name: title, label: Title, widget: string }
+          - name: dadRanks
+            label: Dad ranks
+            widget: list
+            summary: '{{fields.at}}+ XP · {{fields.title}}'
+            fields:
+              - { name: at, label: From XP, widget: number, value_type: int, min: 0 }
+              - { name: title, label: Title, widget: string }
+          - { name: disclaimer, label: Disclaimer, widget: text, hint: 'Shown on every skill, onboarding and /about.' }
+          - { name: pastWindowNote, label: Past-window note, widget: text, required: false }
+          - name: onboarding
+            label: Onboarding
+            widget: object
+            fields:
+              - { name: heroTitle, label: Hero title, widget: string }
+              - { name: heroBody, label: Hero body, widget: text }
+              - { name: cta, label: Button label, widget: string }
+              - { name: catchUpIntro, label: Catch-up intro, widget: text }
+          - { name: footer, label: Footer, widget: text }

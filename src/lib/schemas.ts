@@ -10,6 +10,14 @@ const kebab = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const kebabId = z.string().regex(kebab, 'must be kebab-case, e.g. "rolls-front-to-back"');
 const weeks = z.number().min(0).max(MAX_AGE_WEEKS);
 
+/** Optional field that also accepts the `null` / `''` a CMS may write for an empty value. */
+const optional = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((v) => (v === null || v === '' ? undefined : v), schema.optional());
+/** List that treats `null` as empty. */
+const list = <T extends z.ZodType>(schema: T) => z.preprocess((v) => (v === null ? [] : v), z.array(schema).default([]));
+/** String that treats `null` as empty. */
+const text = () => z.preprocess((v) => (v === null ? '' : v), z.string().default(''));
+
 export const ICON_KEYS = [
   'body',
   'voice',
@@ -23,7 +31,7 @@ export const ICON_KEYS = [
 export const branchSchema = z.object({
   id: kebabId,
   name: z.string().min(1),
-  tagline: z.string().default(''),
+  tagline: text(),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'must be a hex colour like "#F28C38"'),
   icon: z.enum(ICON_KEYS).default('star'),
   order: z.number().int(),
@@ -35,8 +43,8 @@ export const questSchema = z.object({
   id: kebabId,
   type: z.enum(QUEST_TYPES),
   title: z.string().min(1),
-  body: z.string().default(''),
-  leadWeeks: z.number().min(0).max(52).optional(),
+  body: text(),
+  leadWeeks: optional(z.number().min(0).max(52)),
 });
 
 export const sourceSchema = z.object({
@@ -50,17 +58,17 @@ export const milestoneSchema = z.object({
   id: kebabId,
   title: z.string().min(1),
   /** Short label for the tree. Falls back to the title. */
-  label: z.string().optional(),
+  label: optional(z.string()),
   branch: kebabId,
   tier: z.enum(TIERS),
   ageWeeksMin: weeks,
   ageWeeksMax: weeks,
-  prereqs: z.array(kebabId).default([]),
-  gameText: z.string().default(''),
-  fact: z.string().optional(),
-  quests: z.array(questSchema).default([]),
-  sources: z.array(sourceSchema).default([]),
-  sortOffset: z.number().optional(),
+  prereqs: list(kebabId),
+  gameText: text(),
+  fact: optional(z.string()),
+  quests: list(questSchema),
+  sources: list(sourceSchema),
+  sortOffset: optional(z.number()),
   draft: z.boolean().default(false),
 });
 
@@ -86,14 +94,14 @@ export const settingsSchema = z.object({
   levelTitles: z.array(titleStepSchema).min(1),
   dadRanks: z.array(titleStepSchema).min(1),
   disclaimer: z.string().min(1),
-  pastWindowNote: z.string().default(''),
+  pastWindowNote: text(),
   onboarding: z.object({
     heroTitle: z.string(),
     heroBody: z.string(),
     cta: z.string(),
     catchUpIntro: z.string(),
   }),
-  footer: z.string().default(''),
+  footer: text(),
 });
 
 export type Branch = z.infer<typeof branchSchema>;

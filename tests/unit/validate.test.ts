@@ -116,3 +116,27 @@ describe('banned words in the markdown body', () => {
     expect(res.warnings.join('\n')).toMatch(/avoid "should"/);
   });
 });
+
+describe('schema tolerance for CMS output', () => {
+  it('accepts null / empty optional values', () => {
+    const parsed = milestoneSchema.parse({
+      id: 'x',
+      title: 'X',
+      label: '',
+      branch: 'body',
+      tier: 'minor',
+      ageWeeksMin: 1,
+      ageWeeksMax: 2,
+      prereqs: null,
+      gameText: null,
+      fact: '',
+      sortOffset: null,
+      quests: [{ id: 'q', type: 'play', title: 'Q', body: null, leadWeeks: null }],
+      sources: null,
+    });
+    expect(parsed.label).toBeUndefined();
+    expect(parsed.prereqs).toEqual([]);
+    expect(parsed.gameText).toBe('');
+    expect(parsed.quests[0]!.leadWeeks).toBeUndefined();
+  });
+});

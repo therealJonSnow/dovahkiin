@@ -79,7 +79,10 @@
   const setAll = (v: boolean) => (ticked = Object.fromEntries(candidates.map((n) => [n.id, v])));
 </script>
 
-<dialog bind:this={dialog} class="onboarding panel" aria-labelledby="ob-title" onclose={() => (app.onboardingOpen = false)}>
+<dialog
+  bind:this={dialog}
+  class="onboarding panel"
+  aria-labelledby={step === 'details' ? 'ob-title' : 'catchup-title'} onclose={() => (app.onboardingOpen = false)}>
   <div class="top">
     <p class="eyebrow">{step === 'details' ? '1' : '2'} / 2</p>
     <button type="button" class="icon-btn" aria-label={t('detail.close')} onclick={() => (app.onboardingOpen = false)}>
