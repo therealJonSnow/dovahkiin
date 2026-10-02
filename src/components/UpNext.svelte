@@ -9,8 +9,22 @@
   import { isPastWindow } from '../lib/state';
   import { t } from '../i18n';
 
+  interface Props {
+    /** Only this family's items, without the heading and Dad XP card (the family sidebar). */
+    branch?: string;
+  }
+  let { branch }: Props = $props();
+
   const app = useApp();
-  const up = $derived(app.upNext);
+  const up = $derived.by(() => {
+    const all = app.upNext;
+    if (!all || !branch) return all;
+    return {
+      readyNow: all.readyNow.filter((n) => n.branch === branch),
+      prepareSoon: all.prepareSoon.filter((q) => q.node.branch === branch),
+      horizon: all.horizon.filter((n) => n.branch === branch),
+    };
+  });
   const weeks = $derived(app.stateSettings.horizonWeeks);
   const color = (branch: string) => app.branchById.get(branch)?.color ?? '#999';
 
@@ -20,7 +34,7 @@
   const quests = $derived.by(() => {
     if (!up) return [];
     const keys = new Set(up.prepareSoon.map((q) => q.key));
-    return [...up.prepareSoon, ...Object.values(kept).filter((q) => !keys.has(q.key))];
+    return [...up.prepareSoon, ...Object.values(kept).filter((q) => !keys.has(q.key) && (!branch || q.node.branch === branch))];
   });
   function toggle(q: QuestItem, done: boolean) {
     if (done) kept[q.key] = q;
@@ -28,8 +42,8 @@
   }
 </script>
 
-<section class="upnext" aria-labelledby="upnext-title">
-  <header>
+<section class="upnext" aria-labelledby={branch ? undefined : 'upnext-title'} aria-label={branch ? t('upnext.heading') : undefined}>
+  {#if !branch}<header>
     <h2 id="upnext-title">{t('upnext.heading')}</h2>
     <p class="sub">
       {app.babyName ? `${app.babyName} · ` : ''}{app.ageLabel}{app.age?.corrected ? ` (${t('today.corrected')})` : ''}
@@ -43,7 +57,7 @@
         <span class="dad-next">{t('hud.nextTitle', { count: app.dadRank.nextAt! - app.dadRank.value, title: app.dadRank.nextTitle })}</span>
       {/if}
     </div>
-  </header>
+  </header>{/if}
 
   {#if up}
     <div class="group">

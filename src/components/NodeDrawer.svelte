@@ -3,21 +3,16 @@
   import ExternalLink from '@lucide/svelte/icons/external-link';
   import { tick } from 'svelte';
   import { useApp } from '../lib/app.svelte';
-  import { isPastWindow } from '../lib/state';
   import { t } from '../i18n';
-  import NodeDetail from './NodeDetail.svelte';
+  import LiveNodeDetail from './LiveNodeDetail.svelte';
 
   const app = useApp();
   let dialog = $state<HTMLDialogElement>();
   let scroller = $state<HTMLDivElement>();
 
-  const node = $derived(app.selectedId ? app.byId.get(app.selectedId) : undefined);
+  // Phones and tablets only: on wide screens the details live in the sidebar.
+  const node = $derived(app.selectedId && !app.wide ? app.byId.get(app.selectedId) : undefined);
   const branch = $derived(node ? app.branchById.get(node.branch)! : undefined);
-  const related = (ids: string[]) =>
-    ids
-      .map((id) => app.byId.get(id))
-      .filter((n) => !!n)
-      .map((n) => ({ id: n.id, title: n.title, color: app.branchById.get(n.branch)?.color ?? '#999' }));
 
   $effect(() => {
     if (!dialog) return;
@@ -32,6 +27,8 @@
   });
 
   function onclose() {
+    // Resizing to desktop hands the open skill over to the sidebar instead of closing it.
+    if (app.wide) return;
     app.select(null);
     const el = app.returnFocus;
     app.returnFocus = null;
@@ -41,12 +38,6 @@
   function onclick(e: MouseEvent) {
     if (e.target === dialog) dialog?.close();
   }
-
-  const settings = $derived({
-    ...app.stateSettings,
-    disclaimer: app.data.settings.disclaimer,
-    pastWindowNote: app.data.settings.pastWindowNote,
-  });
 </script>
 
 <dialog bind:this={dialog} class="drawer" aria-labelledby="drawer-title" {onclose} {onclick}>
@@ -63,34 +54,7 @@
         </button>
       </div>
       <div class="scroll" bind:this={scroller}>
-        <NodeDetail
-          {node}
-          {branch}
-          prereqs={related(node.prereqs)}
-          unlocks={related(node.unlocks)}
-          {settings}
-          headingId="drawer-title"
-          live={{
-            state: app.states[node.id]!,
-            record: app.isExplore ? undefined : app.saved.unlocked[node.id],
-            canEdit: !app.isExplore,
-            note: app.age ? t('detail.exploreNote') : t('detail.noBabyNote'),
-            today: app.today,
-            ageWeeks: app.ageWeeks,
-            pastWindow: !app.isExplore && isPastWindow(node, app.ageWeeks, app.unlocked),
-            isDone: (key) => app.isQuestDone(key),
-            onUnlock: (date) => app.requestUnlock(node.id, date),
-            onUndo: () => app.undo(node.id),
-            onSetDate: (date) => app.setUnlockDate(node.id, date),
-            onToggleQuest: (key, done) => app.toggleQuest(key, done),
-            onSelect: (id) => app.select(id),
-          }}
-        />
-        {#if !app.age}
-          <button type="button" class="btn btn-primary start" onclick={() => { dialog?.close(); app.onboardingOpen = true; }}>
-            {app.data.settings.onboarding.cta}
-          </button>
-        {/if}
+        <LiveNodeDetail {node} headingId="drawer-title" />
       </div>
     </div>
   {/if}
@@ -139,10 +103,6 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     padding: 0.25rem 1.5rem 2rem;
-  }
-  .start {
-    margin-top: 1rem;
-    width: 100%;
   }
   @keyframes slide-in {
     from {

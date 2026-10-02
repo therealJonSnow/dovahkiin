@@ -41,7 +41,7 @@
   $effect(() => () => cancelAnimationFrame(raf));
 </script>
 
-<div class="explore panel" role="region" aria-label={t('explore.label')}>
+<div class="explore panel" class:with-side={app.focus && app.wide} role="region" aria-label={t('explore.label')}>
   <button
     type="button"
     class="icon-btn play"
@@ -119,7 +119,7 @@
     margin: 0;
   }
   @media (min-width: 1024px) {
-    .explore {
+    .explore.with-side {
       left: calc(50% - 13rem);
     }
   }

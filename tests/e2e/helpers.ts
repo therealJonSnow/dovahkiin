@@ -42,15 +42,22 @@ export async function saved(page: Page) {
   return page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? 'null'), STORAGE_KEY);
 }
 
-/** Opens a node's drawer. On the phone overview the first tap zooms into the branch, so tap again. */
+/** Zooms from the overview into a family's carousel slide. */
+export async function openFamily(page: Page, branch: string) {
+  await page.locator(`.card[data-family="${branch}"]`).click();
+  await page.locator('.focus .bar').waitFor();
+}
+
+/** Zooms into the family holding a skill (if needed), then opens its details. */
 export async function openNode(page: Page, id: string) {
   const node = page.locator(`#node-${id}`);
+  if (!(await node.isVisible())) await page.locator(`.card:has([data-id="${id}"])`).click();
   await node.click();
-  const dialog = page.locator('dialog.drawer[open]');
-  try {
-    await dialog.waitFor({ state: 'visible', timeout: 800 });
-  } catch {
-    await page.locator(`#node-${id}`).click();
-    await dialog.waitFor({ state: 'visible' });
-  }
+  await detail(page).first().waitFor();
+}
+
+/** A skill's details: the sidebar on desktop, the bottom sheet on phones. */
+export function detail(page: Page, name?: string | RegExp) {
+  const where = page.locator('aside.side:has([data-detail]), dialog.drawer[open]');
+  return name ? where.filter({ has: page.getByRole('heading', { level: 2, name }) }) : where;
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
   import Settings from '@lucide/svelte/icons/settings';
   import Compass from '@lucide/svelte/icons/compass';
+  import ListChecks from '@lucide/svelte/icons/list-checks';
   import { useApp } from '../lib/app.svelte';
   import { t } from '../i18n';
 
@@ -9,6 +10,7 @@
   }
   let { ontoggleexplore }: Props = $props();
   const app = useApp();
+  const ready = $derived(app.upNext?.readyNow.length ?? 0);
 </script>
 
 <header class="hud">
@@ -29,6 +31,17 @@
 
   <div class="actions">
     {#if app.age}
+      <button
+        type="button"
+        class="btn btn-sm btn-ghost upnext"
+        aria-label={t('hud.upnextReady', { count: ready })}
+        aria-haspopup="dialog"
+        onclick={() => (app.upNextOpen = true)}
+      >
+        <ListChecks size={18} aria-hidden="true" />
+        <span class="upnext-label" aria-hidden="true">{t('nav.upnext')}</span>
+        {#if ready}<span class="badge" aria-hidden="true">{ready}</span>{/if}
+      </button>
       <span class="xp" title={app.dadRank.title}>
         <span class="k">{t('hud.dadXp')}</span>
         <span class="v">{app.dadRank.value}</span>
@@ -161,13 +174,36 @@
   .about:hover {
     color: var(--ink);
   }
+  .upnext {
+    gap: 0.4rem;
+    margin-right: 0.35rem;
+    color: var(--ink-2);
+  }
+  .badge {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--on-gold);
+    background: var(--gold);
+  }
   .on {
     color: var(--today);
     border-color: color-mix(in oklab, var(--today) 50%, transparent);
   }
   @media (max-width: 1023px) {
-    .word {
+    .word,
+    .upnext-label {
       display: none;
+    }
+    .upnext {
+      margin-right: 0;
+      padding: 0 0.5rem;
     }
     .about {
       display: none;

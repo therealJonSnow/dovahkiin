@@ -86,7 +86,7 @@
       <span class="branch">{branch.name}</span>
       <span class="tier tier-{node.tier}">{t(`tier.${node.tier}`)}</span>
     </p>
-    <h2 id={headingId}>{node.title}</h2>
+    <h2 id={headingId} tabindex="-1">{node.title}</h2>
     <p class="window">{formatWindowSentence(node.ageWeeksMin, node.ageWeeksMax)}</p>
   </header>
 
@@ -263,6 +263,9 @@
     font-size: clamp(1.9rem, 5vw, 2.4rem);
     color: var(--ink);
     margin: 0.2rem 0 0.25rem;
+  }
+  header h2:focus {
+    outline: none;
   }
   .eyebrow {
     display: flex;

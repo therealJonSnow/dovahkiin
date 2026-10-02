@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { isoMonthsAgo, saved } from './helpers';
+import { isoMonthsAgo, openFamily, saved } from './helpers';
 
-test('onboarding: DOB → catch-up → tree with today line', async ({ page }, info) => {
+test('onboarding: DOB → catch-up → overview → family with today line', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(/levelling up/i);
 
@@ -27,12 +27,10 @@ test('onboarding: DOB → catch-up → tree with today line', async ({ page }, i
   expect(state.unlocked['coos']).toBeTruthy();
   expect(state.unlocked['social-smile']).toBeUndefined();
 
-  if (info.project.name === 'mobile') {
-    // Up next is the default landing tab on mobile.
-    await expect(page.getByRole('tab', { name: 'Up next' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('heading', { name: 'Up next' })).toBeVisible();
-    await page.getByRole('tab', { name: 'Tree' }).click();
-  }
+  // Lands on the overview of every family, with today marked across them.
+  await expect(page.getByRole('heading', { name: 'Skill families' })).toBeVisible();
+  await expect(page.locator('.today-tag')).toContainText(/7 months 2 weeks/i);
+  await openFamily(page, 'heart');
   await expect(page.locator('[data-today]')).toBeVisible();
   await expect(page.locator('.today-chip')).toHaveText(/Today · 7 months 2 weeks/i);
   // The unticked keystone is still ready, not "late".
@@ -50,7 +48,7 @@ test('onboarding: corrected age for a baby born early', async ({ page }) => {
   const finish = page.getByRole('button', { name: 'Show the tree' });
   if (await finish.isVisible()) await finish.click();
   await expect(page.locator('dialog.onboarding')).toBeHidden();
-  if (await page.getByRole('tab', { name: 'Tree' }).isVisible()) await page.getByRole('tab', { name: 'Tree' }).click();
+  await openFamily(page, 'body');
   await expect(page.locator('.today-chip')).toHaveText(/\(corrected\)/);
 });
 

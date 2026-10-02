@@ -52,7 +52,12 @@ export class AppStore {
   exploring = $state(false);
   exploreAge = $state(30);
 
+  /** Branch shown in the carousel; null = the zoomed-out overview of every family. */
+  focus = $state<string | null>(null);
   selectedId = $state<string | null>(null);
+  /** Desktop layout: node details live in the sidebar instead of a modal sheet. */
+  wide = $state(true);
+  upNextOpen = $state(false);
   pendingUnlock = $state<PendingUnlock | null>(null);
   celebration = $state<Celebration | null>(null);
   onboardingOpen = $state(false);
@@ -163,14 +168,18 @@ export class AppStore {
     this.persist();
   }
 
-  setView(view: 'upnext' | 'tree') {
-    this.saved.prefs.view = view;
-    this.persist();
+  /** Zooms into one family (or back out to the overview with null). */
+  setFocus(branch: string | null) {
+    if (branch && !this.branchById.has(branch)) branch = null;
+    if (branch !== this.focus) this.selectedId = null;
+    this.focus = branch;
   }
 
-  setBranchFilter(branch: string) {
-    this.saved.prefs.branchFilter = branch;
-    this.persist();
+  /** Moves the carousel by one family, wrapping round. */
+  stepFocus(dir: 1 | -1) {
+    const ids = this.data.branches.map((b) => b.id);
+    const i = this.focus ? ids.indexOf(this.focus) : -1;
+    this.setFocus(ids[(i + dir + ids.length) % ids.length]!);
   }
 
   setTheme(theme: ThemePref) {
@@ -179,9 +188,15 @@ export class AppStore {
     this.persist();
   }
 
+  /** Opens a skill's details, bringing its family into focus. */
   select(id: string | null, from?: HTMLElement | null) {
     if (id && from) this.returnFocus = from;
-    this.selectedId = id;
+    const node = id ? this.byId.get(id) : undefined;
+    if (node) {
+      this.focus = node.branch;
+      this.upNextOpen = false;
+    }
+    this.selectedId = node ? node.id : null;
   }
 
   exportJSON(): string {
@@ -200,6 +215,7 @@ export class AppStore {
     this.saved = emptyState();
     this.exploring = false;
     this.selectedId = null;
+    this.focus = null;
     applyTheme('system');
   }
 }

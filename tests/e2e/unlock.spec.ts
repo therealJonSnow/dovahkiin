@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { isoMonthsAgo, openNode, saved, seed } from './helpers';
+import { detail, isoMonthsAgo, openFamily, openNode, saved, seed } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await seed(page, { dob: isoMonthsAgo(3), view: 'tree' });
@@ -7,11 +7,12 @@ test.beforeEach(async ({ page }) => {
 
 test('unlocking a node updates its state and persists across reload', async ({ page }) => {
   await page.goto('/');
+  await openFamily(page, 'heart');
   const node = page.locator('#node-social-smile');
   await expect(node).toHaveAttribute('aria-label', /ready/);
   await openNode(page, 'social-smile');
 
-  const drawer = page.getByRole('dialog', { name: 'First Social Smile' });
+  const drawer = detail(page, 'First Social Smile');
   await expect(drawer).toBeVisible();
   await expect(drawer.getByText(/talk to your health visitor or GP/)).toBeVisible();
   await drawer.getByRole('button', { name: 'Mark as unlocked' }).click();
@@ -20,6 +21,7 @@ test('unlocking a node updates its state and persists across reload', async ({ p
   await expect(drawer).toBeHidden();
   await expect(node).toHaveAttribute('aria-label', /unlocked/);
 
+  // The focused family is in the URL, so a reload comes back to it.
   await page.reload();
   await expect(page.locator('#node-social-smile')).toHaveAttribute('aria-label', /unlocked/);
   expect((await saved(page)).unlocked['social-smile'].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -29,7 +31,7 @@ test('unlocking out of order asks about prerequisites, and "skipped" counts as s
   await page.goto('/');
   // Crawls needs Sits ← Rolls ← Steady head ← Lifts head.
   await openNode(page, 'crawls');
-  const drawer = page.getByRole('dialog', { name: 'Crawls' });
+  const drawer = detail(page, 'Crawls');
   await drawer.getByRole('button', { name: 'Mark as unlocked' }).click();
 
   const prompt = page.getByRole('alertdialog', { name: 'Also mark its prerequisites as unlocked?' });
@@ -49,7 +51,7 @@ test('unlocking out of order asks about prerequisites, and "skipped" counts as s
 test('quests can be ticked and award Dad XP', async ({ page }) => {
   await page.goto('/');
   await openNode(page, 'rolls-front-to-back');
-  const drawer = page.getByRole('dialog', { name: /Rolls Over/ });
+  const drawer = detail(page, /Rolls Over/);
   await drawer.getByRole('checkbox', { name: /Clear the cot/ }).check();
   expect(Object.keys((await saved(page)).questsDone)).toContain('rolls-front-to-back:clear-the-cot');
 });

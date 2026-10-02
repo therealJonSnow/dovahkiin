@@ -23,8 +23,9 @@ function assertNoOverlaps(layout: Layout, minGap = DEFAULT_LAYOUT.rowHeight) {
 function assertInsideBands(layout: Layout) {
   for (const [id, n] of Object.entries(layout.nodes)) {
     const band = layout.bands.find((b) => b.id === n.band)!;
-    expect(n.y, id).toBeGreaterThanOrEqual(band.y + layout.padTop - 1);
-    expect(n.y, id).toBeLessThanOrEqual(band.y + band.height - layout.padBottom + 1);
+    // The tree grows upwards: padTop (the band's start) is at the bottom on screen.
+    expect(n.y, id).toBeGreaterThanOrEqual(band.y + layout.padBottom - 1);
+    expect(n.y, id).toBeLessThanOrEqual(band.y + band.height - layout.padTop + 1);
   }
 }
 
@@ -38,14 +39,14 @@ describe('computeLayout', () => {
     expect(a.height).toBeGreaterThanOrEqual(DEFAULT_LAYOUT.padTop + DEFAULT_LAYOUT.padBottom + 5 * DEFAULT_LAYOUT.rowHeight);
   });
 
-  it('orders nodes by age within a column and respects sortOffset', () => {
+  it('orders nodes by age within a column, earliest at the bottom, and respects sortOffset', () => {
     const layout = computeLayout(['x'], bands, [
       { id: 'late', branch: 'x', ageWeeksMin: 5, prereqs: [] },
       { id: 'early', branch: 'x', ageWeeksMin: 1, prereqs: [] },
       { id: 'nudged', branch: 'x', ageWeeksMin: 2, sortOffset: 10, prereqs: [] },
     ]);
-    expect(layout.nodes.early!.y).toBeLessThan(layout.nodes.late!.y);
-    expect(layout.nodes.late!.y).toBeLessThan(layout.nodes.nudged!.y);
+    expect(layout.nodes.early!.y).toBeGreaterThan(layout.nodes.late!.y);
+    expect(layout.nodes.late!.y).toBeGreaterThan(layout.nodes.nudged!.y);
   });
 
   it('marks cross-branch edges and drops edges to missing nodes', () => {
@@ -86,16 +87,22 @@ describe('computeLayout', () => {
 
 describe('ageToY / yToAge', () => {
   const layout = computeLayout(['x'], bands, [{ id: 'a', branch: 'x', ageWeeksMin: 3, prereqs: [] }]);
-  it('is monotonic and invertible', () => {
-    let prev = -Infinity;
+  it('climbs as age grows and is invertible', () => {
+    let prev = Infinity;
     for (let w = 0; w <= 104; w += 0.5) {
       const y = ageToY(layout, w);
-      expect(y).toBeGreaterThanOrEqual(prev);
+      expect(y).toBeLessThanOrEqual(prev);
       prev = y;
       expect(yToAge(layout, y)).toBeCloseTo(w, 5);
     }
   });
   it('clamps beyond the tree', () => {
     expect(ageToY(layout, 200)).toBe(ageToY(layout, 104));
+    expect(ageToY(layout, -5)).toBe(ageToY(layout, 0));
+  });
+  it('puts the start of the tree at the bottom', () => {
+    expect(ageToY(layout, 0)).toBeGreaterThan(layout.height / 2);
+    expect(layout.bands[0]!.y + layout.bands[0]!.height).toBe(layout.height);
+    expect(layout.bands[layout.bands.length - 1]!.y).toBe(0);
   });
 });

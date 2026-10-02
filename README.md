@@ -66,8 +66,16 @@ Choices I made to close gaps in the spec:
 - **Undo** removes just that skill. Anything that depends on it stays unlocked, because babies skip things.
 - **Stale quests**: prepare and safety quests stay listed until they're done, unless the skill is already unlocked *and* its window has passed. This keeps the catch-up for an older baby from flooding "Up next".
 - **Corrected age** is used when the due date is more than 2 weeks after the date of birth, until the baby's *actual* age reaches 24 months. Before the due date, age is clamped to 0.
-- **Past 24 months** the today line sits at the bottom with "Tree complete".
+- **Past 24 months** the today line sits at the top with "Tree complete".
 - **Explore mode** pretends everything whose window has opened is unlocked, so the wave lights up as you scrub. It never touches saved progress.
+
+## How the app is laid out
+
+- **Overview first.** The app opens on a zoomed-out view of all six skill families side by side, with no sidebar. Each family is a card showing its progress, how many skills are ready, and a mini constellation. Every card shares one age scale, so the today line runs straight across them all.
+- **One family at a time.** Clicking a card zooms into that family's carousel slide: a full-size constellation of just its skills. Arrows, the family dots, or a horizontal swipe move to the neighbouring family (it wraps round). *All families*, Escape or the browser's Back button zooms out again. The focused family is kept in the URL (`/?family=body`), so it survives a reload and can be shared.
+- **Sidebar only when zoomed in** (desktop, 1024px and up). It describes the focused family and lists what's ready, what to prepare and what's on the horizon in it. Opening a skill shows its details there instead. On phones and tablets, details open in a bottom sheet.
+- **Up next** (everything across families) opens from the HUD.
+- **The tree grows upwards.** Birth is at the bottom and 24 months at the top, so progress climbs. Each band's label sits at its lower edge, where its ages start.
 
 ## Project structure
 
@@ -78,14 +86,15 @@ src/
   lib/
     schemas.ts             # Zod schemas (used by Astro and the validator)
     validate.ts            # pure content checks (cycles, refs, ages, ids, banned words)
-    layout.ts              # build-time layout model: bands, columns, zig-zag, edges
+    layout.ts              # build-time layout model: bands, columns, zig-zag, edges (y grows upwards)
     state.ts               # pure state rules, Up next, levels, XP
     age.ts                 # DOB / corrected-age maths (UTC calendar dates)
     storage.ts             # localStorage `levelup:v1`, migrations, import/export
     app.svelte.ts          # reactive store (Svelte 5 runes)
     nebula.ts              # WebGL sky (lazy, reduced-motion and low-power aware)
     particles.ts           # unlock burst (lazy, skipped with reduced motion)
-  components/              # App, Hud, tree/*, NodeDrawer, NodeDetail, UpNext, Onboarding, …
+  components/              # App, Hud, Overview, FocusView (carousel), FamilyPanel (sidebar),
+                           # tree/*, NodeDrawer, NodeDetail, UpNext, UpNextDialog, Onboarding, …
   pages/                   # index, skills/[id] (static, no JS needed), about, 404
   i18n/en.json             # every UI string
 public/admin/              # Sveltia CMS
@@ -93,7 +102,7 @@ scripts/validate-content.ts
 tests/unit, tests/e2e
 ```
 
-The layout is computed at build time (`layouts.all` plus one single-column layout per branch for phones) and passed to the island as JSON, so positions are deterministic and the client does very little work.
+The layout is computed at build time (`layouts.all` for the overview, plus one single-column layout per family for the carousel) and passed to the island as JSON, so positions are deterministic and the client does very little work.
 
 ## Deploying on Vercel
 
@@ -104,7 +113,7 @@ Import the repository in Vercel. `vercel.json` sets `pnpm build` and `dist/`. No
 - Lighthouse (mobile, local production build): Performance 91–99, Accessibility 100, Best Practices 100, SEO 100
 - axe-core WCAG 2.2 A/AA scan has no violations in the dark and light themes (Playwright `axe.spec.ts`)
 - Island JS is about 46 KB gzipped. The nebula (about 2 KB) and particles (under 1 KB) are lazy-loaded.
-- Keyboard: arrow keys move between nodes in a column and across columns, Enter opens a node, Esc closes it, and focus returns to the node
+- Keyboard: overview cards are buttons; in a family, arrow keys move between nodes, Enter opens a node, Esc closes it (focus returns to the node), and a second Esc zooms back out to the overview
 - `prefers-reduced-motion`: no pulsing, no particles, a still sky, and fades only
 
 ## Open items for Jonny

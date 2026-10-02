@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { isoMonthsAgo, seed } from './helpers';
+import { isoMonthsAgo, openFamily, seed } from './helpers';
 
 test.beforeEach(({}, info) => {
   test.skip(info.project.name !== 'mobile', 'mobile-only checks');
@@ -14,21 +14,24 @@ test('375px: no horizontal scroll on the landing page', async ({ page }) => {
   expect(await noHorizontalScroll(page)).toBe(true);
 });
 
-test('375px: tabs, branch switcher and bottom-sheet drawer', async ({ page }) => {
-  await seed(page, { dob: isoMonthsAgo(5), view: 'upnext' });
+test('375px: overview → one family at a time → bottom-sheet details', async ({ page }) => {
+  await seed(page, { dob: isoMonthsAgo(5) });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Up next' })).toBeVisible();
+  await expect(page.locator('.card')).toHaveCount(6);
   expect(await noHorizontalScroll(page)).toBe(true);
 
-  await page.getByRole('tab', { name: 'Tree' }).click();
-  await expect(page.locator('#node-first-word')).toBeVisible();
-  expect(await noHorizontalScroll(page)).toBe(true);
-
-  // Pick one branch: only its nodes are shown, full width.
-  await page.getByRole('button', { name: 'Voice', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Voice', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  // Zoom into one family: only its skills are on screen, with no sidebar.
+  await openFamily(page, 'voice');
+  await expect(page.getByRole('heading', { name: 'The Voice' })).toBeVisible();
   await expect(page.locator('.node')).toHaveCount(3);
+  await expect(page.locator('aside.side')).toHaveCount(0);
   expect(await noHorizontalScroll(page)).toBe(true);
+
+  // The carousel moves on to the next family.
+  await page.getByRole('button', { name: /^Next family/ }).click();
+  await expect(page.getByRole('heading', { name: 'The Senses' })).toBeVisible();
+  await page.getByRole('button', { name: /^Previous family/ }).click();
+  await expect(page.getByRole('heading', { name: 'The Voice' })).toBeVisible();
 
   await page.locator('#node-babbles').click();
   const sheet = page.getByRole('dialog', { name: 'Babbles' });
@@ -41,11 +44,14 @@ test('375px: tabs, branch switcher and bottom-sheet drawer', async ({ page }) =>
   expect(Math.round(box!.y + box!.height)).toBe(vp.height);
 });
 
-test('375px: tapping a node in the overview zooms into its branch', async ({ page }) => {
-  await seed(page, { dob: isoMonthsAgo(5), view: 'tree' });
-  await page.goto('/');
-  await page.getByRole('button', { name: 'All', exact: true }).click();
-  await page.locator('#node-laughs').click();
-  await expect(page.getByRole('button', { name: 'Heart', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByRole('dialog')).toBeHidden();
+test('375px: swiping moves between families', async ({ page }) => {
+  await seed(page, { dob: isoMonthsAgo(5) });
+  await page.goto('/?family=body');
+  await expect(page.getByRole('heading', { name: 'The Body' })).toBeVisible();
+  const stage = page.locator('.stage');
+  const box = (await stage.boundingBox())!;
+  const y = Math.min(box.y + 200, 600);
+  await stage.dispatchEvent('touchstart', { touches: [{ identifier: 1, clientX: 300, clientY: y }] });
+  await stage.dispatchEvent('touchend', { changedTouches: [{ identifier: 1, clientX: 120, clientY: y + 10 }] });
+  await expect(page.getByRole('heading', { name: 'The Voice' })).toBeVisible();
 });

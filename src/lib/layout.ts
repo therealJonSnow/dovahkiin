@@ -1,8 +1,9 @@
 /**
  * Build-time layout model for the vertical tree.
  *
- * Y = age (non-linear: each band is tall enough for its densest column),
- * X = branch column. Within a column, nodes zig-zag a little either side of
+ * Y = age, growing upwards: the earliest skills sit at the bottom and the tree
+ * climbs towards 24 months (non-linear: each band is tall enough for its
+ * densest column). X = branch column. Within a column, nodes zig-zag a little either side of
  * the centre line so connectors read like constellations.
  */
 
@@ -24,8 +25,11 @@ export interface LayoutInputBand {
 export interface LayoutOptions {
   /** Minimum vertical distance between two nodes in the same column (px). */
   rowHeight: number;
-  /** Room at the top of each band (for its label). */
-  /** padTop + padBottom must be >= rowHeight so nodes either side of a band boundary can't collide. */
+  /**
+   * Room at the start (earliest edge) of each band, which holds its label, and at its end.
+   * The names predate the upward flip: on screen padTop is at the bottom of a band.
+   * padTop + padBottom must be >= rowHeight so nodes either side of a band boundary can't collide.
+   */
   padTop: number;
   padBottom: number;
   minBandHeight: number;
@@ -45,6 +49,7 @@ export const DEFAULT_LAYOUT: LayoutOptions = {
 };
 
 export interface LayoutBand extends LayoutInputBand {
+  /** Top edge on screen (the band's latest age). */
   y: number;
   height: number;
 }
@@ -166,33 +171,43 @@ export function computeLayout(
     }
   }
 
-  return { columns, bands, nodes: out, edges, height: y, padTop: opts.padTop, padBottom: opts.padBottom };
+  // Everything above was computed top-down by age; flip it so the tree grows upwards.
+  const height = y;
+  for (const b of bands) b.y = height - b.y - b.height;
+  for (const n of Object.values(out)) n.y = height - n.y;
+
+  return { columns, bands, nodes: out, edges, height, padTop: opts.padTop, padBottom: opts.padBottom };
 }
 
-/** Maps an age (weeks) to a y position, linear within its band. */
+/** Screen y of a band's earliest and latest age. */
+const bandEnds = (b: LayoutBand, padTop: number, padBottom: number) => ({
+  start: b.y + b.height - padTop,
+  end: b.y + padBottom,
+});
+
+/** Maps an age (weeks) to a y position, linear within its band. Older is higher up (smaller y). */
 export function ageToY(layout: Pick<Layout, 'bands' | 'padTop' | 'padBottom' | 'height'>, weeks: number): number {
   const bands = layout.bands;
   if (!bands.length) return 0;
   const first = bands[0]!;
   const last = bands[bands.length - 1]!;
-  if (weeks <= first.ageWeeksStart) return first.y + layout.padTop;
-  if (weeks >= last.ageWeeksEnd) return last.y + last.height - layout.padBottom;
+  if (weeks <= first.ageWeeksStart) return bandEnds(first, layout.padTop, layout.padBottom).start;
+  if (weeks >= last.ageWeeksEnd) return bandEnds(last, layout.padTop, layout.padBottom).end;
   const b = bandFor(bands, weeks);
-  const top = b.y + layout.padTop;
-  const bottom = b.y + b.height - layout.padBottom;
-  return top + ((weeks - b.ageWeeksStart) / (b.ageWeeksEnd - b.ageWeeksStart)) * (bottom - top);
+  const { start, end } = bandEnds(b, layout.padTop, layout.padBottom);
+  return start + ((weeks - b.ageWeeksStart) / (b.ageWeeksEnd - b.ageWeeksStart)) * (end - start);
 }
 
 /** Inverse of ageToY (used to scrub age by dragging). */
 export function yToAge(layout: Pick<Layout, 'bands' | 'padTop' | 'padBottom'>, y: number): number {
   const bands = layout.bands;
+  if (!bands.length) return 0;
   for (const b of bands) {
-    if (y < b.y + b.height) {
-      const top = b.y + layout.padTop;
-      const bottom = b.y + b.height - layout.padBottom;
-      const frac = Math.min(1, Math.max(0, (y - top) / (bottom - top)));
+    if (y >= b.y && y < b.y + b.height) {
+      const { start, end } = bandEnds(b, layout.padTop, layout.padBottom);
+      const frac = Math.min(1, Math.max(0, (start - y) / (start - end)));
       return b.ageWeeksStart + frac * (b.ageWeeksEnd - b.ageWeeksStart);
     }
   }
-  return bands.length ? bands[bands.length - 1]!.ageWeeksEnd : 0;
+  return y < bands[bands.length - 1]!.y ? bands[bands.length - 1]!.ageWeeksEnd : bands[0]!.ageWeeksStart;
 }

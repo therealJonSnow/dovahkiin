@@ -32,7 +32,7 @@
   const defaultActive = $derived.by(() => {
     const ready = visible
       .filter((n) => app.states[n.id] === 'ready')
-      .sort((a, b) => layout.nodes[a.id]!.y - layout.nodes[b.id]!.y)[0];
+      .sort((a, b) => layout.nodes[b.id]!.y - layout.nodes[a.id]!.y)[0];
     return ready?.id ?? visible[0]?.id ?? null;
   });
   const tabbableId = $derived(activeId && activeId in layout.nodes ? activeId : defaultActive);
@@ -48,15 +48,6 @@
     const base = t('today.label', { age: app.ageLabel });
     return app.age?.corrected ? `${base} (${t('today.corrected')})` : base;
   });
-
-  const counts = $derived(
-    Object.fromEntries(
-      layout.columns.map((c) => {
-        const inBranch = app.nodes.filter((n) => n.branch === c);
-        return [c, { done: inBranch.filter((n) => n.id in app.unlocked).length, total: inBranch.length }];
-      }),
-    ),
-  );
 
   const byColumn = $derived.by(() => {
     const out: string[][] = layout.columns.map(() => []);
@@ -111,11 +102,12 @@
       case 'ArrowLeft':
         next = step(-1);
         break;
+      // The tree grows upwards: Home is the earliest skill (bottom), End the latest (top).
       case 'Home':
-        next = column[0];
+        next = column[column.length - 1];
         break;
       case 'End':
-        next = column[column.length - 1];
+        next = column[0];
         break;
       default:
         return;
@@ -132,26 +124,10 @@
 </script>
 
 <div class="tree" class:multi={cols > 1} style="--cols: {cols}; --h: {layout.height};">
-  <div class="head">
-    <div class="rail-spacer"></div>
-    <div class="head-cols">
-      {#each branches as b (b.id)}
-        {@const Icon = iconFor(b.icon)}
-        {@const c = counts[b.id]!}
-        <div class="col-head" style="--c: {b.color}">
-          <span class="sigil" aria-hidden="true"><Icon size={18} strokeWidth={1.75} /></span>
-          <span class="col-name">{b.name.replace(/^The\s+/i, '')}</span>
-          <span class="col-count" aria-label={t('branch.count', c)}>{c.done}<span aria-hidden="true">/</span>{c.total}</span>
-          <span class="sk-bar" style="--p: {c.total ? c.done / c.total : 0}" aria-hidden="true"></span>
-        </div>
-      {/each}
-    </div>
-  </div>
-
   <div class="body">
     <div class="rail" aria-hidden="true">
       {#each layout.bands as b (b.id)}
-        <div class="band-label" style="--y: {b.y}">{b.label}</div>
+        <div class="band-label" style="--y: {b.y + b.height}">{b.label}</div>
       {/each}
     </div>
 
@@ -171,8 +147,8 @@
 
       {#if barNode}
         {@const p = layout.nodes[barNode.id]!}
-        {@const y1 = ageToY(layout, barNode.ageWeeksMin)}
-        {@const y2 = ageToY(layout, barNode.ageWeeksMax)}
+        {@const y1 = ageToY(layout, barNode.ageWeeksMax)}
+        {@const y2 = ageToY(layout, barNode.ageWeeksMin)}
         <div
           class="window-bar"
           style="--c: {colors[barNode.branch]}; --x: {(p.col + p.x) / cols}; --y1: {y1}; --y2: {y2};"
@@ -227,63 +203,6 @@
     --rail: 4.75rem;
     position: relative;
   }
-  .head {
-    position: sticky;
-    top: var(--sticky-top, var(--hud-h));
-    z-index: 15;
-    display: grid;
-    grid-template-columns: var(--rail) 1fr;
-    padding: 0.6rem 0 0.5rem;
-    background: linear-gradient(180deg, var(--bg) 0%, color-mix(in oklab, var(--bg) 85%, transparent) 75%, transparent);
-  }
-  .head-cols {
-    display: grid;
-    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-  }
-  .col-head {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 0.15rem 0.4rem;
-    padding: 0 0.5rem;
-    min-width: 0;
-  }
-  .sigil {
-    display: grid;
-    place-items: center;
-    width: 30px;
-    height: 30px;
-    color: color-mix(in oklab, var(--c) 75%, var(--ink));
-    border: 1px solid color-mix(in oklab, var(--c) 45%, transparent);
-    transform: rotate(45deg);
-    border-radius: 4px;
-  }
-  .sigil :global(svg) {
-    transform: rotate(-45deg);
-  }
-  .col-name {
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-shadow: var(--text-halo);
-  }
-  .col-count {
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: var(--ink);
-    text-shadow: var(--text-halo);
-  }
-  .col-head .sk-bar {
-    grid-column: 1 / -1;
-    height: 8px;
-  }
-
   .body {
     display: grid;
     grid-template-columns: var(--rail) 1fr;
@@ -291,9 +210,11 @@
   .rail {
     position: relative;
   }
+  /* Labels sit at the bottom of their band, where its ages begin. */
   .band-label {
     position: absolute;
-    top: calc(var(--y) * var(--s) * 1px + 0.5rem);
+    top: calc(var(--y) * var(--s) * 1px - 0.5rem);
+    transform: translateY(-100%);
     left: 0;
     right: 0.5rem;
     font-family: var(--font-display);
@@ -334,7 +255,7 @@
     height: max(4px, calc((var(--y2) - var(--y1)) * var(--s) * 1px));
     width: 4px;
     border-radius: 4px;
-    background: linear-gradient(180deg, color-mix(in oklab, var(--c) 70%, transparent), color-mix(in oklab, var(--c) 15%, transparent));
+    background: linear-gradient(0deg, color-mix(in oklab, var(--c) 70%, transparent), color-mix(in oklab, var(--c) 15%, transparent));
     z-index: 1;
     pointer-events: none;
   }
@@ -397,35 +318,8 @@
       font-size: 0.72rem;
       letter-spacing: 0.06em;
     }
-    .col-name {
-      font-size: 1rem;
-    }
   }
   @media (max-width: 640px) {
-    .tree.multi {
-      --s: 0.62;
-    }
-    .tree.multi .col-head {
-      grid-template-columns: 1fr;
-      justify-items: center;
-      padding: 0 0.15rem;
-    }
-    .tree.multi .col-name {
-      display: none;
-    }
-    .tree.multi .col-count {
-      font-size: 0.9rem;
-    }
-    .tree.multi .sigil {
-      width: 26px;
-      height: 26px;
-    }
-    .tree.multi .col-sigil {
-      display: none;
-    }
-    .tree:not(.multi) .col-head {
-      padding: 0 0.25rem;
-    }
     .today {
       transition: none;
     }
