@@ -1,5 +1,6 @@
 ---
 import { getTreeData } from '../lib/content';
+import { t } from '../i18n';
 const { settings } = await getTreeData();
 ---
 
@@ -7,9 +8,9 @@ const { settings } = await getTreeData();
   <hr class="sk-rule" />
   <p class="disclaimer">{settings.footer}</p>
   <p class="disclaimer">{settings.disclaimer}</p>
-  <nav aria-label="Footer">
-    <a href="/">Tree</a>
-    <a href="/about">About</a>
+  <nav aria-label={t('nav.footer')}>
+    <a href="/">{t('nav.tree')}</a>
+    <a href="/about">{t('nav.about')}</a>
   </nav>
 </footer>
 

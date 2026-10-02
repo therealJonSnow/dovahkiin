@@ -1,12 +1,13 @@
 ---
 import Base from '../layouts/Base.astro';
 import StaticHeader from '../components/StaticHeader.astro';
+import { t } from '../i18n';
 ---
 
 <Base title="Not found · Dovahkiin">
   <StaticHeader />
   <main class="page prose">
-    <h1>Area not discovered</h1>
-    <p>This part of the map hasn't been unlocked yet. <a href="/">Back to the tree</a>.</p>
+    <h1>{t('notFound.title')}</h1>
+    <p>{t('notFound.body')} <a href="/">{t('notFound.back')}</a>.</p>
   </main>
 </Base>

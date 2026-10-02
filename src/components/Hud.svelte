@@ -17,7 +17,8 @@
     <span class="word">{t('app.name')}</span>
   </a>
 
-  <div class="level" aria-label="{t('hud.level')} {app.level.value}, {app.level.title}">
+  <div class="level">
+    <span class="sr-only">{t('hud.level')} {app.level.value}, {app.level.title}</span>
     <span class="lv" aria-hidden="true">
       <span class="k">{t('hud.level')}</span>
       <span class="v">{app.level.value}</span>

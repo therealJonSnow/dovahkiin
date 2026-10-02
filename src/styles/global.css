@@ -28,6 +28,10 @@
   --line-lit: rgb(255 246 228 / 0.9);
   --focus: #ffe2a6;
   --today: #ffd08a;
+  --on-today: #1a1206;
+  --on-gold: #1a1408;
+  --btn-a: #f1dcae;
+  --btn-b: #b89a5e;
   --text-halo: 0 1px 2px rgb(0 0 0 / 0.95), 0 0 10px rgb(0 0 0 / 0.85);
   --shadow-lg: 0 24px 60px rgb(0 0 0 / 0.55);
   --danger: #f2a68c;
@@ -55,7 +59,11 @@
   --line-dim: rgb(29 26 36 / 0.2);
   --line-lit: rgb(60 42 12 / 0.75);
   --focus: #7a4f00;
-  --today: #a35c00;
+  --today: #8a4b00;
+  --on-today: #fffaf0;
+  --on-gold: #fffaf0;
+  --btn-a: #7a5a1c;
+  --btn-b: #5a4012;
   --text-halo: 0 0 6px rgb(252 249 243 / 0.95), 0 0 2px rgb(252 249 243 / 1);
   --shadow-lg: 0 24px 60px rgb(60 40 10 / 0.2);
   --danger: #a3401f;
@@ -80,7 +88,11 @@
     --line-dim: rgb(29 26 36 / 0.2);
     --line-lit: rgb(60 42 12 / 0.75);
     --focus: #7a4f00;
-    --today: #a35c00;
+    --today: #8a4b00;
+  --on-today: #fffaf0;
+  --on-gold: #fffaf0;
+  --btn-a: #7a5a1c;
+  --btn-b: #5a4012;
     --text-halo: 0 0 6px rgb(252 249 243 / 0.95), 0 0 2px rgb(252 249 243 / 1);
     --shadow-lg: 0 24px 60px rgb(60 40 10 / 0.2);
     --danger: #a3401f;
@@ -280,17 +292,14 @@ textarea {
   background: color-mix(in oklab, var(--gold) 12%, var(--panel-solid));
 }
 .btn-primary {
-  background: linear-gradient(180deg, color-mix(in oklab, var(--gold) 92%, white), var(--gold-2));
+  background: linear-gradient(180deg, var(--btn-a), var(--btn-b));
   border-color: transparent;
-  color: #1a1408;
+  color: var(--on-gold);
   box-shadow: 0 0 24px color-mix(in oklab, var(--gold) 35%, transparent);
 }
 .btn-primary:hover {
-  background: linear-gradient(180deg, #fff1cf, var(--gold));
-  color: #1a1408;
-}
-:root[data-theme='light'] .btn-primary {
-  color: #fffaf0;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--btn-a) 85%, white), var(--btn-a));
+  color: var(--on-gold);
 }
 .btn-ghost {
   background: transparent;

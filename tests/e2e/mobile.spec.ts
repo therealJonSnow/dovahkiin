@@ -33,6 +33,8 @@ test('375px: tabs, branch switcher and bottom-sheet drawer', async ({ page }) =>
   await page.locator('#node-babbles').click();
   const sheet = page.getByRole('dialog', { name: 'Babbles' });
   await expect(sheet).toBeVisible();
+  // Measure after the slide-up animation has finished.
+  await sheet.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
   const box = await sheet.boundingBox();
   const vp = page.viewportSize()!;
   expect(Math.round(box!.width)).toBe(vp.width);

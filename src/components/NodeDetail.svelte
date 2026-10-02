@@ -130,7 +130,7 @@
                 <input type="date" bind:value={date} max={live.today} />
               </label>
             {:else}
-              <button type="button" class="link-btn" onclick={() => (showDate = true)}>Different day?</button>
+              <button type="button" class="link-btn" onclick={() => (showDate = true)}>{t('detail.differentDay')}</button>
             {/if}
           </div>
         {/if}
@@ -240,7 +240,7 @@
         {#each node.sources as s (s.url)}
           <li>
             <a href={s.url} target="_blank" rel="noopener noreferrer">
-              {s.label}<ExternalLink size={12} aria-hidden="true" /><span class="sr-only"> (opens in a new tab)</span>
+              {s.label}<ExternalLink size={12} aria-hidden="true" /><span class="sr-only">{t('detail.newTab')}</span>
             </a>
           </li>
         {/each}
@@ -484,6 +484,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
+    min-height: 28px;
   }
   footer {
     border-top: 1px solid var(--rule);

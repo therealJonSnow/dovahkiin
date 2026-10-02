@@ -145,6 +145,11 @@ export function startNebula(canvas: HTMLCanvasElement): () => void {
   const uShade = u('u_shade');
   const uCap = u('u_cap');
 
+  // Software WebGL (no GPU) is far too slow to animate: draw one still frame instead.
+  const info = gl.getExtension('WEBGL_debug_renderer_info');
+  const renderer = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '';
+  let still = /swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer);
+
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
   let palette = currentPalette();
   let raf = 0;
@@ -165,8 +170,9 @@ export function startNebula(canvas: HTMLCanvasElement): () => void {
   const draw = (now: number) => {
     resize();
     gl.uniform2f(uRes, canvas.width, canvas.height);
-    gl.uniform1f(uTime, reduce.matches ? 30 : (now - t0) / 1000);
-    gl.uniform1f(uScroll, reduce.matches ? 0 : (scrollY / Math.max(1, innerHeight)) * 0.12);
+    const frozen = still || reduce.matches;
+    gl.uniform1f(uTime, frozen ? 30 : (now - t0) / 1000);
+    gl.uniform1f(uScroll, frozen ? 0 : (scrollY / Math.max(1, innerHeight)) * 0.12);
     gl.uniform3fv(uBase, palette.base);
     gl.uniform3fv(uA, palette.a);
     gl.uniform3fv(uB, palette.b);
@@ -177,16 +183,24 @@ export function startNebula(canvas: HTMLCanvasElement): () => void {
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   };
 
+  // If frames keep taking too long (a weak GPU), stop animating.
+  let slow = 0;
   const loop = (now: number) => {
     raf = requestAnimationFrame(loop);
     if (now - last < 33) return;
     last = now;
+    const t = performance.now();
     draw(now);
+    slow = performance.now() - t > 12 ? slow + 1 : Math.max(0, slow - 1);
+    if (slow > 20) {
+      still = true;
+      cancelAnimationFrame(raf);
+    }
   };
 
   const start = () => {
     cancelAnimationFrame(raf);
-    if (reduce.matches || document.hidden) draw(performance.now());
+    if (still || reduce.matches || document.hidden) draw(performance.now());
     else raf = requestAnimationFrame(loop);
   };
 

@@ -91,7 +91,7 @@
                 />
                 <span class="item-body">
                   <span class="item-title">
-                    {#if q.quest.type === 'safety'}<ShieldAlert size={14} aria-hidden="true" /><span class="sr-only">Safety: </span>{/if}
+                    {#if q.quest.type === 'safety'}<ShieldAlert size={14} aria-hidden="true" /><span class="sr-only">{t('upnext.safetyPrefix')}</span>{/if}
                     {q.quest.title}
                   </span>
                   {#if q.quest.body}<span class="qbody">{q.quest.body}</span>{/if}

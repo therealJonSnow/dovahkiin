@@ -5,6 +5,7 @@ import StaticHeader from '../../components/StaticHeader.astro';
 import SiteFooter from '../../components/SiteFooter.astro';
 import NodeDetail from '../../components/NodeDetail.svelte';
 import { getTreeData } from '../../lib/content';
+import { t } from '../../i18n';
 
 export const getStaticPaths = (async () => {
   const data = await getTreeData();
@@ -31,12 +32,12 @@ const plain = node.html.replace(/<[^>]+>/g, '').trim().split('\n')[0]?.slice(0, 
 <Base title={`${node.title} · Dovahkiin`} description={plain}>
   <StaticHeader />
   <main class="page skill-page">
-    <nav class="crumbs" aria-label="Breadcrumb">
-      <a href="/">Tree</a> <span aria-hidden="true">›</span> <span>{branch.name}</span>
+    <nav class="crumbs" aria-label={t('nav.breadcrumb')}>
+      <a href="/">{t('nav.tree')}</a> <span aria-hidden="true">›</span> <span>{branch.name}</span>
     </nav>
     <div class="panel card">
       <NodeDetail {node} {branch} prereqs={related(node.prereqs)} unlocks={related(node.unlocks)} {settings} />
-      <a class="btn btn-primary open" href={`/?skill=${node.id}`}>Open in your tree</a>
+      <a class="btn btn-primary open" href={`/?skill=${node.id}`}>{t('detail.openInTree')}</a>
     </div>
   </main>
   <SiteFooter />

@@ -158,9 +158,7 @@
     <!-- Arrow keys are delegated from the node buttons inside this group. -->
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div class="canvas" role="group" aria-label={t('app.tagline')} aria-describedby="tree-help" {onkeydown}>
-      <p id="tree-help" class="sr-only">
-        Use the arrow keys to move between skills and Enter to open one. Escape closes the details.
-      </p>
+      <p id="tree-help" class="sr-only">{t('tree.help')}</p>
       {#each layout.bands as b, i (b.id)}
         {#if i > 0}<div class="band-line" style="--y: {b.y}"></div>{/if}
       {/each}
@@ -358,7 +356,9 @@
     position: absolute;
     left: calc(-1 * var(--rail));
     right: 0;
-    top: calc(var(--y) * var(--s) * 1px);
+    top: 0;
+    /* transform, not top: moving the line never causes layout shift */
+    transform: translateY(calc(var(--y) * var(--s) * 1px));
     height: 2px;
     z-index: 3;
     pointer-events: none;
@@ -366,7 +366,7 @@
     box-shadow:
       0 0 10px var(--today),
       0 0 30px color-mix(in oklab, var(--today) 50%, transparent);
-    transition: top 0.25s ease-out;
+    transition: transform 0.25s ease-out;
   }
   .today.explore {
     opacity: 0.85;
@@ -384,12 +384,9 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     white-space: nowrap;
-    color: #1a1206;
+    color: var(--on-today);
     background: var(--today);
     box-shadow: 0 0 16px color-mix(in oklab, var(--today) 60%, transparent);
-  }
-  :global([data-theme='light']) .today-chip {
-    color: #fffaf0;
   }
 
   @media (max-width: 1023px) {

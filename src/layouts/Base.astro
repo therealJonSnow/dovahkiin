@@ -5,6 +5,8 @@ import '@fontsource/barlow-condensed/600.css';
 import '@fontsource-variable/inter';
 import '../styles/global.css';
 import { STORAGE_KEY } from '../lib/storage';
+import display500 from '@fontsource/barlow-condensed/files/barlow-condensed-latin-500-normal.woff2?url';
+import bodyFont from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 
 interface Props {
   title?: string;
@@ -30,6 +32,8 @@ const {
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href={display500} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={bodyFont} as="font" type="font/woff2" crossorigin />
     <script is:inline define:vars={{ key: STORAGE_KEY }}>
       // Apply the saved theme before first paint, and hide the landing hero for returning visitors.
       try {
@@ -47,8 +51,10 @@ const {
       const canvas = document.getElementById('nebula') as HTMLCanvasElement | null;
       if (canvas) {
         const go = () => import('../lib/nebula').then((m) => m.startNebula(canvas));
-        if ('requestIdleCallback' in window) requestIdleCallback(go, { timeout: 1500 });
-        else setTimeout(go, 300);
+        const idle = () =>
+          'requestIdleCallback' in window ? requestIdleCallback(go, { timeout: 2500 }) : setTimeout(go, 500);
+        if (document.readyState === 'complete') idle();
+        else addEventListener('load', idle, { once: true });
       }
     </script>
   </body>
