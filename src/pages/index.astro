@@ -1,0 +1,5 @@
+---
+import { getTreeData } from '../lib/content';
+const data = await getTreeData();
+---
+<html><body><pre>{JSON.stringify(data.nodes.slice(0,1), null, 2)}</pre></body></html>

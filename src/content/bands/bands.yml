@@ -1,0 +1,29 @@
+bands:
+  - id: newborn
+    label: Newborn
+    ageWeeksStart: 0
+    ageWeeksEnd: 6
+  - id: 6w-3m
+    label: 6 weeks – 3 months
+    ageWeeksStart: 6
+    ageWeeksEnd: 13
+  - id: 3-6m
+    label: 3–6 months
+    ageWeeksStart: 13
+    ageWeeksEnd: 26
+  - id: 6-9m
+    label: 6–9 months
+    ageWeeksStart: 26
+    ageWeeksEnd: 39
+  - id: 9-12m
+    label: 9–12 months
+    ageWeeksStart: 39
+    ageWeeksEnd: 52
+  - id: 12-18m
+    label: 12–18 months
+    ageWeeksStart: 52
+    ageWeeksEnd: 78
+  - id: 18-24m
+    label: 18–24 months
+    ageWeeksStart: 78
+    ageWeeksEnd: 104

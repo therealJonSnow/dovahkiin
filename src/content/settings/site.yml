@@ -1,0 +1,40 @@
+readyLeadWeeks: 2
+horizonWeeks: 8
+levelTitles:
+  - at: 0
+    title: Fresh Spawn
+  - at: 3
+    title: Wobbly Recruit
+  - at: 8
+    title: Tummy-Time Trainee
+  - at: 15
+    title: Floor Explorer
+  - at: 25
+    title: Furniture Climber
+  - at: 40
+    title: Toddling Adventurer
+  - at: 60
+    title: Tiny Legend
+dadRanks:
+  - at: 0
+    title: Nappy Squire
+  - at: 3
+    title: Bottle Knight
+  - at: 8
+    title: Stair-Gate Warden
+  - at: 15
+    title: Thane of the Nursery
+  - at: 25
+    title: Dadovahkiin
+disclaimer: "Every baby is different. If you're worried, talk to your health visitor or GP."
+pastWindowNote: "Some babies take a bit longer, and that's normal. Plenty of babies skip steps entirely."
+onboarding:
+  heroTitle: Your baby is levelling up.
+  heroBody: >-
+    A skill tree for the first two years. See what your little one has unlocked,
+    what they might be ready for now, and what to prepare before the next big thing arrives.
+  cta: Start your baby's tree
+  catchUpIntro: >-
+    These skills usually arrive before your baby's current age. Which can they already do?
+    Untick anything they haven't done yet. No pressure, it all stays on this device.
+footer: "Not a medical tool, and not a checklist to stress about. Age ranges are broad and every baby takes their own route."
