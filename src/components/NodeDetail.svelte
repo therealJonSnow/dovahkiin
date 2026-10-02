@@ -5,7 +5,8 @@
   import Package from '@lucide/svelte/icons/package';
   import Gamepad from '@lucide/svelte/icons/gamepad-2';
   import Lightbulb from '@lucide/svelte/icons/lightbulb';
-  import { formatWeeks, formatWindowSentence } from '../lib/age';
+  import { formatWeeks } from '../lib/age';
+  import WindowMeter from './WindowMeter.svelte';
   import type { NodeState, StateSettings, UnlockRecord } from '../lib/state';
   import { questKey, questSurfaceWeek } from '../lib/state';
   import type { QuestType } from '../lib/schemas';
@@ -26,6 +27,8 @@
     today: string;
     ageWeeks: number;
     pastWindow: boolean;
+    /** A baby is set up (or Explore mode is on), so there's an age to mark on the window. */
+    hasAge: boolean;
     isDone: (key: string) => boolean;
     onUnlock: (date: string) => void;
     onUndo: () => void;
@@ -41,11 +44,13 @@
     unlocks: Related[];
     settings: StateSettings & { disclaimer: string; pastWindowNote: string };
     headingId?: string;
+    /** Static pages already carry the disclaimer in the site footer. */
+    showDisclaimer?: boolean;
     /** Present in the app; absent on static pages. */
     live?: Interactive;
   }
 
-  let { node, branch, prereqs, unlocks, settings, headingId = 'detail-title', live }: Props = $props();
+  let { node, branch, prereqs, unlocks, settings, headingId = 'detail-title', showDisclaimer = true, live }: Props = $props();
 
   let date = $state('');
   let showDate = $state(false);
@@ -68,6 +73,14 @@
     live ? (live.record?.skipped ? t('stateLabel.skipped') : t(`stateLabel.${live.state}`)) : null,
   );
 
+  // Where today sits relative to the window, said gently.
+  const windowNote = $derived.by(() => {
+    if (!live?.hasAge || live.record) return t('window.note');
+    if (live.ageWeeks < node.ageWeeksMin) return t('window.before');
+    if (live.ageWeeks <= node.ageWeeksMax) return t('window.inside');
+    return (live.pastWindow && settings.pastWindowNote) || t('window.after');
+  });
+
   function formatDate(iso: string) {
     if (!iso) return '';
     const [y, m, d] = iso.split('-').map(Number);
@@ -87,12 +100,12 @@
       <span class="tier tier-{node.tier}">{t(`tier.${node.tier}`)}</span>
     </p>
     <h2 id={headingId} tabindex="-1">{node.title}</h2>
-    <p class="window">{formatWindowSentence(node.ageWeeksMin, node.ageWeeksMax)}</p>
+    {#if node.gameText}
+      <p class="game">{node.gameText}</p>
+    {/if}
   </header>
 
-  {#if node.gameText}
-    <blockquote class="game">{node.gameText}</blockquote>
-  {/if}
+  <WindowMeter min={node.ageWeeksMin} max={node.ageWeeksMax} ageWeeks={live?.hasAge ? live.ageWeeks : undefined} note={windowNote} />
 
   {#if live}
     <section class="status st-{live.state}" aria-label="Status">
@@ -137,55 +150,22 @@
       {:else if live.note}
         <p class="muted small">{live.note}</p>
       {/if}
-      {#if live.pastWindow && settings.pastWindowNote}
-        <p class="soft">{settings.pastWindowNote}</p>
-      {/if}
     </section>
   {/if}
 
   <!-- Trusted: rendered from repository markdown at build time. -->
   <div class="desc">{@html node.html}</div>
 
-  <section class="links-grid">
-    <div>
-      <h3>{t('detail.prereqs')}</h3>
-      {#if prereqs.length}
-        <ul class="related">
-          {#each prereqs as p (p.id)}
-            <li style="--c: {p.color}">
-              {#if live}
-                <button type="button" onclick={() => live.onSelect(p.id)}>{p.title}</button>
-              {:else}
-                <a href="/skills/{p.id}">{p.title}</a>
-              {/if}
-            </li>
-          {/each}
-        </ul>
-      {:else}
-        <p class="muted small">{t('detail.none')}</p>
-      {/if}
-    </div>
-    {#if unlocks.length}
-      <div>
-        <h3>{t('detail.unlocks')}</h3>
-        <ul class="related">
-          {#each unlocks as u (u.id)}
-            <li style="--c: {u.color}">
-              {#if live}
-                <button type="button" onclick={() => live.onSelect(u.id)}>{u.title}</button>
-              {:else}
-                <a href="/skills/{u.id}">{u.title}</a>
-              {/if}
-            </li>
-          {/each}
-        </ul>
-      </div>
-    {/if}
-  </section>
+  {#if node.fact}
+    <aside class="fact">
+      <Lightbulb size={16} aria-hidden="true" />
+      <p><span class="sr-only">{t('detail.fact')}: </span>{node.fact}</p>
+    </aside>
+  {/if}
 
   {#if quests.length}
-    <section class="quests">
-      <h3>{t('detail.quests')}</h3>
+    <section class="quests" aria-labelledby="{headingId}-quests">
+      <h3 id="{headingId}-quests">{t('detail.quests')}</h3>
       {#each quests as g (g.type)}
         <div class="quest-group q-{g.type}">
           <h4><g.Icon size={15} aria-hidden="true" /> {t(`detail.quest.${g.type}`)}</h4>
@@ -226,30 +206,44 @@
     </section>
   {/if}
 
-  {#if node.fact}
-    <aside class="fact">
-      <h3><Lightbulb size={15} aria-hidden="true" /> {t('detail.fact')}</h3>
-      <p>{node.fact}</p>
-    </aside>
-  {/if}
-
-  {#if node.sources.length}
-    <section class="sources">
-      <h3>{t('detail.sources')}</h3>
-      <ul>
-        {#each node.sources as s (s.url)}
-          <li>
-            <a href={s.url} target="_blank" rel="noopener noreferrer">
-              {s.label}<ExternalLink size={12} aria-hidden="true" /><span class="sr-only">{t('detail.newTab')}</span>
-            </a>
-          </li>
-        {/each}
-      </ul>
+  {#if prereqs.length || unlocks.length}
+    <section class="path">
+      {#each [{ key: 'detail.after' as const, list: prereqs }, { key: 'detail.unlocks' as const, list: unlocks }] as row (row.key)}
+        {#if row.list.length}
+          <div class="path-row">
+            <h3>{t(row.key)}</h3>
+            <ul class="related">
+              {#each row.list as r (r.id)}
+                <li style="--c: {r.color}">
+                  {#if live}
+                    <button type="button" onclick={() => live.onSelect(r.id)}>{r.title}</button>
+                  {:else}
+                    <a href="/skills/{r.id}">{r.title}</a>
+                  {/if}
+                </li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
+      {/each}
     </section>
   {/if}
 
   <footer>
-    <p class="disclaimer">{settings.disclaimer}</p>
+    {#if node.sources.length}
+      <p class="sources">
+        <span class="sources-label">{t('detail.sources')}</span>
+        {#each node.sources as s, i (s.url)}
+          {#if i > 0}<span aria-hidden="true"> · </span>{/if}
+          <a href={s.url} target="_blank" rel="noopener noreferrer">
+            {s.label}<ExternalLink size={11} aria-hidden="true" /><span class="sr-only">{t('detail.newTab')}</span>
+          </a>
+        {/each}
+      </p>
+    {/if}
+    {#if showDisclaimer}
+      <p class="disclaimer">{settings.disclaimer}</p>
+    {/if}
   </footer>
 </article>
 
@@ -257,12 +251,12 @@
   .detail {
     display: flex;
     flex-direction: column;
-    gap: 1.1rem;
+    gap: 1.35rem;
   }
   header h2 {
     font-size: clamp(1.9rem, 5vw, 2.4rem);
     color: var(--ink);
-    margin: 0.2rem 0 0.25rem;
+    margin: 0.2rem 0 0;
   }
   header h2:focus {
     outline: none;
@@ -285,27 +279,22 @@
     border-color: var(--gold-2);
     color: var(--gold);
   }
-  .window {
-    margin: 0;
-    color: var(--ink-2);
-  }
+  /* Flavour text: a quiet line under the title rather than a box. */
   .game {
-    margin: 0;
-    padding: 0.75rem 1rem;
-    border-left: 2px solid var(--c);
-    background: color-mix(in oklab, var(--c) 8%, transparent);
+    margin: 0.35rem 0 0;
     color: var(--gold);
     font-style: italic;
-    border-radius: 0 0.4rem 0.4rem 0;
+    font-size: 0.95rem;
+    line-height: 1.45;
   }
   .status {
     display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    padding: 0.85rem 1rem;
-    border: 1px solid var(--panel-border);
-    border-radius: var(--radius);
-    background: color-mix(in oklab, var(--bg) 40%, transparent);
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem 1rem;
+    padding: 0.75rem 0;
+    border-block: 1px solid var(--rule);
   }
   .state-line {
     display: flex;
@@ -353,17 +342,29 @@
   .small {
     font-size: 0.9rem;
     margin: 0;
-  }
-  .soft {
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--ink-2);
+    flex-basis: 100%;
   }
   .desc {
     color: var(--ink-2);
   }
   .desc :global(p:last-child) {
     margin-bottom: 0;
+  }
+  .fact {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    margin-top: -0.35rem;
+    color: var(--ink-2);
+    font-size: 0.95rem;
+  }
+  .fact :global(svg) {
+    flex: none;
+    margin-top: 0.2rem;
+    color: var(--gold);
+  }
+  .fact p {
+    margin: 0;
   }
   h3 {
     display: flex;
@@ -374,10 +375,95 @@
     color: var(--ink-3);
     margin: 0 0 0.5rem;
   }
-  .links-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-    gap: 1rem;
+
+  /* Quests: plain lists split by thin rules, no card per item. */
+  .quests {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .quests > h3 {
+    margin-bottom: -0.2rem;
+  }
+  .quest-group h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.12em;
+    margin: 0 0 0.15rem;
+    color: var(--ink-2);
+  }
+  .q-safety {
+    padding: 0.6rem 0.85rem 0.25rem;
+    border-radius: var(--radius);
+    background: color-mix(in oklab, var(--danger) 8%, transparent);
+    border-left: 2px solid color-mix(in oklab, var(--danger) 60%, transparent);
+  }
+  .q-safety h4 {
+    color: var(--danger);
+  }
+  .quest-group ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .quest-group li + li {
+    border-top: 1px solid var(--rule);
+  }
+  .quest {
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-start;
+    padding: 0.55rem 0;
+    cursor: pointer;
+  }
+  div.quest {
+    cursor: default;
+  }
+  .quest input {
+    margin-top: 0.2rem;
+  }
+  .quest strong {
+    display: block;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .qbody {
+    display: block;
+    color: var(--ink-2);
+    font-size: 0.92rem;
+  }
+  .surf {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.8rem;
+    color: var(--ink-3);
+  }
+  .bullet {
+    width: 7px;
+    height: 7px;
+    margin: 0.5rem 0.2rem 0;
+    flex: none;
+    transform: rotate(45deg);
+    background: var(--c);
+  }
+
+  .path {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .path-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.75rem;
+  }
+  .path-row h3 {
+    margin: 0;
+    min-width: 7.5rem;
+    font-size: 0.95rem;
   }
   .related {
     list-style: none;
@@ -401,99 +487,29 @@
     text-decoration: none;
     cursor: pointer;
   }
-  .quests {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  .quest-group h4 {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.95rem;
-    letter-spacing: 0.12em;
-    margin: 0 0 0.35rem;
-    color: var(--ink-2);
-  }
-  .q-safety h4 {
-    color: var(--danger);
-  }
-  .quest-group ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+
+  footer {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
-  }
-  .quest {
-    display: flex;
-    gap: 0.65rem;
-    align-items: flex-start;
-    padding: 0.6rem 0.75rem;
-    border-radius: 0.4rem;
-    border: 1px solid var(--rule);
-    background: color-mix(in oklab, var(--bg) 35%, transparent);
-    cursor: pointer;
-  }
-  div.quest {
-    cursor: default;
-  }
-  .q-safety .quest {
-    border-color: color-mix(in oklab, var(--danger) 40%, transparent);
-  }
-  .quest input {
-    margin-top: 0.2rem;
-  }
-  .quest strong {
-    display: block;
-    color: var(--ink);
-    font-weight: 600;
-  }
-  .qbody {
-    display: block;
-    color: var(--ink-2);
-    font-size: 0.92rem;
-  }
-  .surf {
-    display: block;
-    margin-top: 0.15rem;
-    font-size: 0.8rem;
+    border-top: 1px solid var(--rule);
+    padding-top: 0.85rem;
+    font-size: 0.82rem;
     color: var(--ink-3);
   }
-  .bullet {
-    width: 8px;
-    height: 8px;
-    margin-top: 0.5rem;
-    flex: none;
-    transform: rotate(45deg);
-    background: var(--c);
-  }
-  .fact {
-    padding: 0.85rem 1rem;
-    border-radius: var(--radius);
-    border: 1px dashed var(--panel-border);
-  }
-  .fact p {
+  footer p {
     margin: 0;
-    color: var(--ink-2);
   }
-  .sources ul {
-    margin: 0;
-    padding-left: 1rem;
-    font-size: 0.85rem;
+  .sources-label {
+    margin-right: 0.5rem;
+    font-family: var(--font-display);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
   .sources a {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    min-height: 28px;
-  }
-  footer {
-    border-top: 1px solid var(--rule);
-    padding-top: 0.85rem;
-  }
-  footer .disclaimer {
-    margin: 0;
+    gap: 0.2rem;
+    min-height: 24px;
   }
 </style>

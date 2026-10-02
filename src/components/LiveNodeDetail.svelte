@@ -41,6 +41,7 @@
     note: app.age ? t('detail.exploreNote') : t('detail.noBabyNote'),
     today: app.today,
     ageWeeks: app.ageWeeks,
+    hasAge: !!app.age && !app.isExplore,
     pastWindow: !app.isExplore && isPastWindow(node, app.ageWeeks, app.unlocked),
     isDone: (key) => app.isQuestDone(key),
     onUnlock: (date) => app.requestUnlock(node.id, date),

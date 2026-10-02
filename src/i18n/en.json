@@ -131,7 +131,7 @@
   "notFound.body": "This part of the map hasn't been unlocked yet.",
   "notFound.back": "Back to the tree",
   "overview.heading": "Skill families",
-  "overview.hint": "Pick a family to zoom in. The tree grows upwards, from birth at the bottom to 24 months at the top.",
+  "overview.hint": "Pick a family to zoom in. The tree grows upwards, from birth at the bottom to 24 months at the top. Each star marks when a skill can first appear, and the glow above it is the window most babies get there in.",
   "overview.card": "{name}: {tagline}. {done} of {total} unlocked.",
   "overview.ready": "ready",
   "overview.readyAria": "{count} ready now.",
@@ -147,5 +147,11 @@
   "panel.back": "Back to {name}",
   "panel.label": "About {name}",
   "hud.upnextReady": "Up next, {count} ready now",
-  "nav.tree": "Tree"
+  "nav.tree": "Tree",
+  "window.most": "Most babies get there at {window}",
+  "window.note": "It's a window, not a deadline. Some get there sooner, some later, and every baby takes their own route.",
+  "window.before": "The window hasn't opened yet. There's nothing to watch for until it does.",
+  "window.inside": "Today sits inside the window. Any point in it is typical, near the start or near the end.",
+  "window.after": "Past the usual window. Plenty of babies take longer or find another route, so take your time.",
+  "detail.after": "Comes after"
 }

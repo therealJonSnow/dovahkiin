@@ -39,7 +39,6 @@
 
   const cardId = $derived(app.selectedId ? null : (hoverId ?? (focusKeyboard ? focusId : null)));
   const barId = $derived(hoverId ?? focusId ?? app.selectedId);
-  const barNode = $derived(barId && barId in layout.nodes ? app.byId.get(barId) : undefined);
 
   const todayY = $derived(ageToY(layout, app.ageWeeks));
   const todayText = $derived.by(() => {
@@ -145,18 +144,23 @@
 
       <Connectors {layout} states={app.states} unlocked={app.unlocked} {colors} {branchOf} highlight={barId} />
 
-      {#if barNode}
-        {@const p = layout.nodes[barNode.id]!}
-        {@const y1 = ageToY(layout, barNode.ageWeeksMax)}
-        {@const y2 = ageToY(layout, barNode.ageWeeksMin)}
+      <!-- Age windows: a feathered glow from when a skill can first open to when most babies have it. -->
+      {#each visible as node (node.id)}
+        {@const p = layout.nodes[node.id]!}
+        {@const top = ageToY(layout, node.ageWeeksMax)}
+        {@const bottom = p.y}
+        {@const hot = barId === node.id}
         <div
-          class="window-bar"
-          style="--c: {colors[barNode.branch]}; --x: {(p.col + p.x) / cols}; --y1: {y1}; --y2: {y2};"
+          class="range st-{app.states[node.id]}"
+          class:hot
+          style="--c: {colors[node.branch]}; --x: {(p.col + p.x) / cols}; --y1: {top}; --y2: {bottom};"
           aria-hidden="true"
         >
-          <span>{formatWindow(barNode.ageWeeksMin, barNode.ageWeeksMax)}</span>
+          {#if hot}
+            <span class="range-end range-max">{formatWindow(node.ageWeeksMin, node.ageWeeksMax)}</span>
+          {/if}
         </div>
-      {/if}
+      {/each}
 
       <div class="today" class:explore={app.isExplore} style="--y: {todayY}" data-today>
         <span class="today-chip">{todayText}</span>
@@ -191,6 +195,7 @@
           skipped={!!app.unlocked[cardId]?.skipped}
           pastWindow={!app.isExplore && isPastWindow(n, app.ageWeeks, app.unlocked)}
           pastNote={app.data.settings.pastWindowNote}
+          ageWeeks={app.age && !app.isExplore ? app.ageWeeks : undefined}
         />
       {/if}
     </div>
@@ -248,28 +253,52 @@
     pointer-events: none;
   }
 
-  .window-bar {
+  /* Age window behind each star. Faint by default, brighter when it matters. */
+  .range {
     position: absolute;
-    left: calc(var(--x) * 100% - 34px);
+    left: calc(var(--x) * 100%);
     top: calc(var(--y1) * var(--s) * 1px);
-    height: max(4px, calc((var(--y2) - var(--y1)) * var(--s) * 1px));
-    width: 4px;
-    border-radius: 4px;
-    background: linear-gradient(0deg, color-mix(in oklab, var(--c) 70%, transparent), color-mix(in oklab, var(--c) 15%, transparent));
-    z-index: 1;
+    height: max(24px, calc((var(--y2) - var(--y1)) * var(--s) * 1px));
+    width: 8px;
+    margin-left: -4px;
+    border-radius: 999px;
+    background: linear-gradient(
+      0deg,
+      color-mix(in oklab, var(--c) 45%, transparent),
+      color-mix(in oklab, var(--c) 30%, transparent) 50%,
+      transparent
+    );
+    opacity: 0.4;
+    z-index: 0;
     pointer-events: none;
+    transition:
+      opacity 0.3s ease,
+      width 0.3s ease,
+      margin 0.3s ease;
   }
-  .window-bar span {
+  .range.st-ready {
+    opacity: 0.75;
+  }
+  .range.st-unlocked {
+    opacity: 0.25;
+  }
+  .range.hot {
+    opacity: 1;
+    width: 16px;
+    margin-left: -8px;
+    z-index: 1;
+  }
+  .range-end {
     position: absolute;
-    bottom: -1.3rem;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -100%);
+    top: -0.2rem;
     white-space: nowrap;
     font-family: var(--font-display);
     font-size: 0.75rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--ink-3);
+    color: var(--ink-2);
     text-shadow: var(--text-halo);
   }
 

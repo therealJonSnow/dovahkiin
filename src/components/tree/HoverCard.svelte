@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { formatWindowSentence } from '../../lib/age';
   import type { LayoutNode } from '../../lib/layout';
   import type { NodeState } from '../../lib/state';
   import type { ClientBranch, ClientNode } from '../../lib/types';
   import { t } from '../../i18n';
+  import WindowMeter from '../WindowMeter.svelte';
 
   interface Props {
     node: ClientNode;
@@ -14,9 +14,10 @@
     skipped: boolean;
     pastWindow: boolean;
     pastNote: string;
+    ageWeeks?: number;
   }
 
-  let { node, branch, pos, cols, nodeState, skipped, pastWindow, pastNote }: Props = $props();
+  let { node, branch, pos, cols, nodeState, skipped, pastWindow, pastNote, ageWeeks }: Props = $props();
 
   const fx = $derived((pos.col + pos.x) / cols);
   const side = $derived(fx > 0.55 ? 'left' : 'right');
@@ -34,8 +35,10 @@
   <h3>{node.title}</h3>
   <p class="meta">
     <span class="chip">{stateLabel}</span>
-    <span>{formatWindowSentence(node.ageWeeksMin, node.ageWeeksMax)}</span>
   </p>
+  <div class="win">
+    <WindowMeter min={node.ageWeeksMin} max={node.ageWeeksMax} {ageWeeks} compact />
+  </div>
   {#if node.gameText}
     <p class="game">{node.gameText}</p>
   {/if}
@@ -103,6 +106,9 @@
   .st-unlocked .chip {
     border-color: var(--c);
     color: var(--ink);
+  }
+  .win {
+    margin-bottom: 0.7rem;
   }
   .game {
     font-style: italic;

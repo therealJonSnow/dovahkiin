@@ -76,6 +76,7 @@ Choices I made to close gaps in the spec:
 - **Sidebar only when zoomed in** (desktop, 1024px and up). It describes the focused family and lists what's ready, what to prepare and what's on the horizon in it. Opening a skill shows its details there instead. On phones and tablets, details open in a bottom sheet.
 - **Up next** (everything across families) opens from the HUD.
 - **The tree grows upwards.** Birth is at the bottom and 24 months at the top, so progress climbs. Each band's label sits at its lower edge, where its ages start.
+- **Windows, not dates.** Every star has a soft glow rising from it to `ageWeeksMax`, in the overview and in each family, so the tree shows ranges rather than points (hover or select a skill to brighten its glow and see the range). Skill details open with a 0–24 month range meter (`WindowMeter.svelte`) with today marked on it and a gentle note about where today sits in the window.
 
 ## Project structure
 

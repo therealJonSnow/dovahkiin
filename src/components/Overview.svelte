@@ -78,6 +78,17 @@
             {#if i > 0}<span class="band-line" style="--y: {pct(b.y + b.height)}"></span>{/if}
           {/each}
           <svg viewBox="0 0 100 {layout.height}" preserveAspectRatio="none" focusable="false">
+            {#each f.nodes as n (n.id)}
+              {@const p = layout.nodes[n.id]!}
+              <line
+                class="range"
+                x1={p.x * 100}
+                y1={p.y}
+                x2={p.x * 100}
+                y2={Math.min(p.y, ageToY(layout, n.ageWeeksMax))}
+                vector-effect="non-scaling-stroke"
+              />
+            {/each}
             {#each f.edges as e (`${e.from}>${e.to}`)}
               {@const a = layout.nodes[e.from]!}
               {@const z = layout.nodes[e.to]!}
@@ -311,6 +322,11 @@
   line.lit {
     stroke: color-mix(in oklab, var(--c) 70%, var(--ink));
     stroke-width: 1.5;
+  }
+  /* Each skill's age window, rising from its star. */
+  line.range {
+    stroke: color-mix(in oklab, var(--c) 22%, transparent);
+    stroke-width: 6;
   }
 
   .dot {
