@@ -38,7 +38,7 @@
     state: app.states[node.id]!,
     record: app.isExplore ? undefined : app.saved.unlocked[node.id],
     canEdit: !app.isExplore,
-    note: app.age ? t('detail.exploreNote') : t('detail.noBabyNote'),
+    note: t('detail.noBabyNote'),
     today: app.today,
     ageWeeks: app.ageWeeks,
     hasAge: !!app.age && !app.isExplore,

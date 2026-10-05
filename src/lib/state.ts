@@ -141,7 +141,7 @@ export function applyUndo(unlocked: UnlockedMap, id: string): UnlockedMap {
   return next;
 }
 
-/** Explore mode: pretend everything whose window has opened is unlocked. */
+/** Preview (no baby yet): pretend everything whose window has opened is unlocked. */
 export function simulateUnlocked(nodes: StateNode[], ageWeeks: number): UnlockedMap {
   const out: UnlockedMap = {};
   for (const n of nodes) if (n.ageWeeksMin <= ageWeeks) out[n.id] = { date: '' };

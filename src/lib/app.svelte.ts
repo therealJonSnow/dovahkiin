@@ -49,8 +49,8 @@ export class AppStore {
   storageOk = $state(true);
   today = $state('');
 
-  exploring = $state(false);
-  exploreAge = $state(30);
+  /** Before a baby is set up, the tree is previewed at this age. */
+  readonly previewAge = 30;
 
   /** Branch shown in the carousel; null = the zoomed-out overview of every family. */
   focus = $state<string | null>(null);
@@ -66,11 +66,11 @@ export class AppStore {
   returnFocus: HTMLElement | null = null;
 
   age = $derived.by((): Age | null => (this.saved.baby && this.today ? getAge(this.saved.baby, this.today) : null));
-  isExplore = $derived(this.exploring || !this.age);
+  isExplore = $derived(!this.age);
   realAgeWeeks = $derived(this.age ? Math.min(this.age.ageWeeks, 104) : 0);
-  ageWeeks = $derived(this.isExplore ? this.exploreAge : this.realAgeWeeks);
+  ageWeeks = $derived(this.isExplore ? this.previewAge : this.realAgeWeeks);
   unlocked = $derived.by(
-    (): UnlockedMap => (this.isExplore ? simulateUnlocked(this.nodes, this.exploreAge) : this.saved.unlocked),
+    (): UnlockedMap => (this.isExplore ? simulateUnlocked(this.nodes, this.previewAge) : this.saved.unlocked),
   );
   states = $derived.by((): Record<string, NodeState> => computeStates(this.nodes, this.ageWeeks, this.unlocked, this.stateSettings));
   upNext = $derived.by(() =>
@@ -79,7 +79,7 @@ export class AppStore {
   level = $derived.by(() => titleFor(countUnlocked(this.nodes, this.unlocked), this.data.settings.levelTitles));
   dadRank = $derived.by(() => titleFor(countQuestsDone(this.nodes, this.saved.questsDone), this.data.settings.dadRanks));
   ageLabel = $derived.by(() => {
-    if (this.isExplore) return formatWeeks(this.exploreAge);
+    if (this.isExplore) return formatWeeks(this.previewAge);
     const a = this.age!;
     return formatAgeSpan(a.from, parseISODate(this.today)!);
   });
@@ -116,7 +116,6 @@ export class AppStore {
     this.saved.baby = baby;
     const date = this.today || todayISO();
     for (const id of catchUp) if (!(id in this.saved.unlocked)) this.saved.unlocked[id] = { date };
-    this.exploring = false;
     this.persist();
   }
 
@@ -213,7 +212,6 @@ export class AppStore {
   reset() {
     this.store?.clear();
     this.saved = emptyState();
-    this.exploring = false;
     this.selectedId = null;
     this.focus = null;
     applyTheme('system');

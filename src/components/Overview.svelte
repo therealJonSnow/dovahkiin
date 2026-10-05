@@ -46,7 +46,7 @@
           <span class="band-label" style="--y: {pct(b.y + b.height)}">{b.label}</span>
         {/each}
         <span class="today-tag" style="--y: {todayPct}">
-          {app.isExplore ? t('explore.label') : t('today.short')}<br /><strong>{app.ageLabel}</strong>
+          {app.isExplore ? t('today.preview') : t('today.short')}<br /><strong>{app.ageLabel}</strong>
         </span>
       </div>
     </div>

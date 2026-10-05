@@ -27,7 +27,7 @@
     today: string;
     ageWeeks: number;
     pastWindow: boolean;
-    /** A baby is set up (or Explore mode is on), so there's an age to mark on the window. */
+    /** A baby is set up, so there's an age to mark on the window. */
     hasAge: boolean;
     isDone: (key: string) => boolean;
     onUnlock: (date: string) => void;

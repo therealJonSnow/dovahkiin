@@ -1,14 +1,9 @@
 <script lang="ts">
   import Settings from '@lucide/svelte/icons/settings';
-  import Compass from '@lucide/svelte/icons/compass';
   import ListChecks from '@lucide/svelte/icons/list-checks';
   import { useApp } from '../lib/app.svelte';
   import { t } from '../i18n';
 
-  interface Props {
-    ontoggleexplore: () => void;
-  }
-  let { ontoggleexplore }: Props = $props();
   const app = useApp();
   const ready = $derived(app.upNext?.readyNow.length ?? 0);
 </script>
@@ -46,17 +41,6 @@
         <span class="k">{t('hud.dadXp')}</span>
         <span class="v">{app.dadRank.value}</span>
       </span>
-      <button
-        type="button"
-        class="icon-btn"
-        class:on={app.exploring}
-        aria-pressed={app.exploring}
-        aria-label={t('nav.explore')}
-        title={t('nav.explore')}
-        onclick={ontoggleexplore}
-      >
-        <Compass size={20} aria-hidden="true" />
-      </button>
     {:else if app.hydrated}
       <button type="button" class="btn btn-sm btn-primary start" onclick={() => (app.onboardingOpen = true)}>
         {app.data.settings.onboarding.cta}
@@ -191,10 +175,6 @@
     letter-spacing: 0;
     color: var(--on-gold);
     background: var(--gold);
-  }
-  .on {
-    color: var(--today);
-    border-color: color-mix(in oklab, var(--today) 50%, transparent);
   }
   @media (max-width: 1023px) {
     .word,

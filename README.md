@@ -67,12 +67,12 @@ Choices I made to close gaps in the spec:
 - **Stale quests**: prepare and safety quests stay listed until they're done, unless the skill is already unlocked *and* its window has passed. This keeps the catch-up for an older baby from flooding "Up next".
 - **Corrected age** is used when the due date is more than 2 weeks after the date of birth, until the baby's *actual* age reaches 24 months. Before the due date, age is clamped to 0.
 - **Past 24 months** the today line sits at the top with "Tree complete".
-- **Explore mode** pretends everything whose window has opened is unlocked, so the wave lights up as you scrub. It never touches saved progress.
+- **Preview** (before a baby is set up) shows the tree at a sample age (30 weeks), pretending everything whose window has opened is unlocked. It never touches saved progress.
 
 ## How the app is laid out
 
 - **Overview first.** The app opens on a zoomed-out view of all six skill families side by side, with no sidebar. Each family is a card showing its progress, how many skills are ready, and a mini constellation. Every card shares one age scale, so the today line runs straight across them all.
-- **One family at a time.** Clicking a card zooms into that family's carousel slide: a full-size constellation of just its skills. Arrows, the family dots, or a horizontal swipe move to the neighbouring family (it wraps round). *All families*, Escape or the browser's Back button zooms out again. The focused family is kept in the URL (`/?family=body`), so it survives a reload and can be shared.
+- **One family at a time.** A family always opens scrolled to its base (birth), so all the progress so far is in view. Clicking a card zooms into that family's carousel slide: a full-size constellation of just its skills. Arrows, the family dots, or a horizontal swipe move to the neighbouring family (it wraps round). *All families*, Escape or the browser's Back button zooms out again. The focused family is kept in the URL (`/?family=body`), so it survives a reload and can be shared.
 - **Sidebar only when zoomed in** (desktop, 1024px and up). It describes the focused family and lists what's ready, what to prepare and what's on the horizon in it. Opening a skill shows its details there instead. On phones and tablets, details open in a bottom sheet.
 - **Up next** (everything across families) opens from the HUD.
 - **The tree grows upwards.** Birth is at the bottom and 24 months at the top, so progress climbs. Each band's label sits at its lower edge, where its ages start.

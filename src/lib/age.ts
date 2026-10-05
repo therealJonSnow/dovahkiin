@@ -140,7 +140,7 @@ export function formatAgeSpan(from: CalendarDate, to: CalendarDate): string {
   return weeks > 0 ? `${plural(months, 'month')} ${plural(weeks, 'week')}` : plural(months, 'month');
 }
 
-/** Formats a fractional age in weeks (used by Explore mode and the window bar). */
+/** Formats a fractional age in weeks (used by the preview and quest timings). */
 export function formatWeeks(weeks: number): string {
   const w = Math.max(0, weeks);
   if (w < 1) return 'Newborn';

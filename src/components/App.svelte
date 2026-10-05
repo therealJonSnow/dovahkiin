@@ -13,7 +13,6 @@
   import UnlockPrompt from './UnlockPrompt.svelte';
   import Onboarding from './Onboarding.svelte';
   import SettingsDialog from './SettingsDialog.svelte';
-  import ExploreSlider from './ExploreSlider.svelte';
   import Celebration from './Celebration.svelte';
 
   interface Props {
@@ -25,20 +24,15 @@
   const app = new AppStore(data);
   setApp(app);
 
-  let slider = $state<ReturnType<typeof ExploreSlider>>();
-
   const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   const zoom = (start: number) => ({ start, opacity: 0, duration: reducedMotion() ? 0 : 220 });
 
-  function scrollToToday(behavior: ScrollBehavior = 'auto') {
-    const el = document.querySelector<HTMLElement>('[data-today]');
-    if (!el || !el.offsetParent) return;
-    // The tree grows upwards, so put the line ~60% down the part of the viewport
-    // not covered by sticky bars: more of what's coming next is in view above it.
-    const bar = document.querySelector<HTMLElement>('.focus .bar');
-    const covered = bar ? bar.getBoundingClientRect().bottom : 0;
-    const top = el.getBoundingClientRect().top + scrollY - (covered + (innerHeight - covered) * 0.6);
-    scrollTo({ top: Math.max(0, top), behavior: reducedMotion() ? 'auto' : behavior });
+  /** The tree grows upwards from birth, so a family opens at its base with all the progress so far in view. */
+  function scrollToTreeBase() {
+    const tree = document.querySelector<HTMLElement>('.focus .tree');
+    if (!tree) return;
+    const top = tree.getBoundingClientRect().bottom + scrollY - innerHeight + 24;
+    scrollTo({ top: Math.max(0, top) });
   }
 
   function onactivate(id: string, el: HTMLElement) {
@@ -75,20 +69,9 @@
       const id = app.selectedId;
       const node = id ? document.getElementById(`node-${id}`) : null;
       if (node) node.scrollIntoView({ block: 'center' });
-      else scrollToToday();
+      else scrollToTreeBase();
     });
   });
-
-  async function toggleExplore() {
-    if (app.exploring) {
-      app.exploring = false;
-      await tick();
-      scrollToToday('smooth');
-    } else {
-      app.exploreAge = Math.round(app.realAgeWeeks * 2) / 2;
-      app.exploring = true;
-    }
-  }
 
   function afterOnboarding() {
     scrollTo({ top: 0 });
@@ -127,9 +110,6 @@
       tick().then(() => app.select(skill, null));
     } else if (family) {
       app.setFocus(family);
-    } else if (!app.age && !reducedMotion()) {
-      // First visit: light the families up in a wave.
-      tick().then(() => slider?.play(0, 30, 3.2));
     }
 
     return () => {
@@ -143,7 +123,7 @@
 <svelte:window {onkeydown} />
 
 <a class="skip-link" href="#tree">{t('nav.skip')}</a>
-<Hud ontoggleexplore={toggleExplore} />
+<Hud />
 
 {#if !app.age && !app.focus}
   <section class="hero" aria-labelledby="hero-title">
@@ -165,7 +145,7 @@
   <p class="storage-note" role="status">{t('settings.noStorage')}</p>
 {/if}
 
-<div class="shell" class:focused={!!app.focus} class:exploring={app.isExplore}>
+<div class="shell" class:focused={!!app.focus}>
   <main id="tree" class="main" tabindex="-1">
     {#if app.focus}
       <div in:scale={zoom(0.94)}>
@@ -181,10 +161,6 @@
     <FamilyPanel />
   {/if}
 </div>
-
-{#if app.isExplore}
-  <ExploreSlider bind:this={slider} onexit={toggleExplore} />
-{/if}
 
 <UpNextDialog />
 <NodeDrawer />
@@ -249,13 +225,13 @@
     gap: 1.5rem;
     max-width: 96rem;
     margin: 0 auto;
-    padding: 0 var(--gutter) 6rem;
+    padding: 0 var(--gutter) 2rem;
   }
 
   @media (max-width: 1023px) {
     .shell.focused {
       display: block;
-      padding: 0 var(--gutter) 7rem;
+      padding: 0 var(--gutter) 1.5rem;
     }
   }
 </style>
